@@ -1,7 +1,7 @@
 {
-  "name": "Donna Voice",
+  "name": "Donna OS",
   "short_name": "Donna",
-  "description": "Spreek tegen Donna — zij ordent het.",
+  "description": "Donna OS — jouw externe brein.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

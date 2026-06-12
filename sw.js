@@ -1,5 +1,5 @@
-/* Donna Voice — service worker: app-shell cache, API altijd via netwerk */
-var CACHE = 'donna-voice-v1';
+/* Donna OS — service worker: app-shell cache, API altijd via netwerk */
+var CACHE = 'donna-os-v1';
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {

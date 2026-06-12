@@ -2,208 +2,968 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Donna">
+<meta name="apple-mobile-web-app-title" content="Donna OS">
 <meta name="theme-color" content="#FAF7F0">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Donna Voice</title>
+<title>Donna OS</title>
+<style>body { padding-top: env(safe-area-inset-top); }</style>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   :root {
     --ivoor: #FAF7F0; --vlak: #F1EDE2; --wit: #FFFEFB;
     --inkt: #1A1916; --inkt2: #57544C; --gedempt: #9A947F;
-    --accent: #C8401A; --lijn: #E6E1D3;
+    --accent: #C8401A; --lijn: #E6E1D3; --lijn-d: #34322B;
+    --d-bg: #1A1916; --d-tekst: #F0EDE4; --d-zacht: #B5B0A0;
     --serif: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
-    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   }
   html, body { height: 100%; }
-  body { font-family: var(--sans); background: var(--ivoor); color: var(--inkt); line-height: 1.5; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top); }
-  header { padding: 18px 20px 12px; border-bottom: 1.5px solid var(--inkt); }
-  header .label { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--gedempt); text-transform: uppercase; }
-  header h1 { font-family: var(--serif); font-size: 30px; font-weight: 500; letter-spacing: -.01em; }
-  main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 20px 20px; }
+  body { font-family: var(--sans); background: var(--ivoor); color: var(--inkt); line-height: 1.45; display: flex; flex-direction: column; overflow: hidden; }
+  svg.ic { width: 17px; height: 17px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding: 16px 18px 12px; border-bottom: 1.5px solid var(--inkt); background: var(--ivoor); }
+  header > div:first-child { flex-shrink: 0; }
+  header .datum { font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; color: var(--gedempt); text-transform: uppercase; white-space: nowrap; }
+  header h1 { font-family: var(--serif); font-size: 28px; font-weight: 500; letter-spacing: -.01em; margin-top: 1px; }
+  .hdr-stat { text-align: right; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: var(--inkt2); display: none; }
+  body.v-vandaag .hdr-stat { display: block; }
+  .hdr-stat b { color: var(--accent); font-weight: 500; cursor: pointer; }
+  .focus-knop { font-family: var(--mono); font-size: 16.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); background: none; border: none; cursor: pointer; padding: 5px 0 0; display: block; margin-left: auto; }
+  .focus-knop.aan { text-decoration: underline; text-underline-offset: 3px; }
+
+  main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .view { display: none; padding: 4px 18px 110px; max-width: 680px; margin: 0 auto; width: 100%; }
+  .view.actief { display: block; }
+  .sectie-kop { font-family: var(--mono); font-size: 16.5px; font-weight: 600; letter-spacing: .14em; color: var(--inkt2); text-transform: uppercase; margin: 24px 0 9px; }
+  button.sectie-kop { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0; }
+  .leeg { padding: 12px 0; color: var(--gedempt); font-size: 14.5px; }
+  .terug { font-family: var(--mono); font-size: 12.5px; letter-spacing: .1em; color: var(--inkt2); background: none; border: none; cursor: pointer; padding: 14px 0 2px; text-transform: uppercase; }
+
+  .taak { display: flex; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--lijn); }
+  .taak .nr { font-family: var(--mono); font-size: 13.5px; color: var(--gedempt); min-width: 26px; background: none; border: none; cursor: pointer; padding: 4px 0; text-align: left; }
+  .taak.top .nr { color: var(--accent); }
+  .taak .nr:active { color: var(--inkt); }
+  .taak .vink { background: none; border: none; cursor: pointer; padding: 4px 0; color: var(--gedempt); min-width: 26px; }
+  .taak .vink svg { width: 16px; height: 16px; }
+  .taak .t-body { flex: 1; min-width: 0; cursor: pointer; }
+  .taak .t-titel { font-size: 16px; font-weight: 500; line-height: 1.35; }
+  .taak .t-stap { font-size: 13.5px; color: var(--gedempt); margin-top: 2px; }
+  .taak .t-meta { display: flex; gap: 10px; align-items: center; color: var(--gedempt); }
+  .tag { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; border: 1px solid var(--inkt2); padding: 2px 6px; color: var(--inkt2); background: none; }
+  .tag.u { border-color: var(--accent); color: var(--accent); }
+  button.tag { cursor: pointer; }
+  .taak .plan { background: none; border: none; color: var(--gedempt); cursor: pointer; padding: 4px; }
+  .hint { font-family: var(--mono); font-size: 11.5px; color: var(--gedempt); margin-top: 6px; }
+  .planblok { display: none; gap: 8px; align-items: center; padding: 10px 0 12px 26px; border-bottom: 1px solid var(--lijn); flex-wrap: wrap; }
+  .planblok.open { display: flex; }
+  .planblok input, .planblok select { border: 1px solid var(--lijn); background: var(--wit); padding: 7px 8px; font-size: 14px; font-family: var(--mono); outline: none; color: var(--inkt); }
+  .plan-ok { font-family: var(--mono); font-size: 12.5px; color: var(--accent); padding: 8px 0 10px 26px; border-bottom: 1px solid var(--lijn); }
+  .taak.lift { background: var(--wit); border: 1px solid var(--lijn); border-bottom: none; padding: 12px 13px; margin: 0 -13px; box-shadow: 0 6px 18px rgba(26,25,22,.09); }
+  .stappen { background: var(--wit); border: 1px solid var(--lijn); border-top: none; margin: 0 -13px 12px; padding: 2px 16px 16px 52px; font-family: var(--serif); font-size: 15.5px; line-height: 1.75; white-space: pre-wrap; box-shadow: 0 6px 18px rgba(26,25,22,.09); }
+  .stappen .spinner { padding: 10px 0; font-family: var(--mono); }
+  .proj-detail { padding: 8px 0 12px 8px; border-bottom: 1px solid var(--lijn); }
+  .pd-rij { font-size: 14.5px; padding: 5px 0; color: var(--inkt2); }
+  .pd-kop { display: flex; gap: 14px; font-family: var(--mono); font-size: 12px; color: var(--gedempt); }
+  .pd-stap { font-size: 13px; color: var(--gedempt); margin-top: 2px; }
+
+  .habit-rij { display: flex; gap: 14px; overflow-x: auto; padding: 6px 0 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .habit-rij::-webkit-scrollbar { display: none; }
+  .habit { text-align: center; width: 66px; flex-shrink: 0; cursor: pointer; user-select: none; }
+  .habit:active { opacity: .6; }
+  .ring { width: 46px; height: 46px; margin: 0 auto 5px; position: relative; }
+  .ring svg { width: 46px; height: 46px; transform: rotate(-90deg); }
+  .ring circle { transition: stroke-dashoffset .45s ease; }
+  .ring .cijfer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13.5px; color: var(--inkt); }
+  .habit.top .cijfer { color: var(--accent); }
+  .h-naam { font-size: 11.5px; line-height: 1.25; color: var(--inkt2); }
+  .habit.af .h-naam { color: var(--gedempt); }
+
+  .tijdlijn { border-left: 1.5px solid var(--inkt); margin-left: 40px; margin-top: 4px; cursor: pointer; }
+  .blok { position: relative; margin: 0 0 6px 14px; padding: 7px 10px; background: var(--wit); border: 1px solid var(--lijn); }
+  .blok .b-tijd { position: absolute; left: -56px; top: 6px; font-family: var(--mono); font-size: 11.5px; color: var(--gedempt); width: 38px; text-align: right; }
+  .blok .b-titel { font-size: 14px; font-weight: 500; line-height: 1.3; }
+  .blok .b-duur { font-family: var(--mono); font-size: 11.5px; color: var(--gedempt); margin-top: 1px; }
+  .blok.eerste { border-left: 3px solid var(--accent); }
+
+  .focus-groot { display: none; text-align: center; padding: 60px 10px 30px; }
+  body.focus .focus-groot { display: block; }
+  body.focus .verberg-in-focus { display: none !important; }
+  .focus-groot .f-label { font-family: var(--mono); font-size: 11.5px; letter-spacing: .2em; color: var(--accent); text-transform: uppercase; }
+  .focus-groot h3 { font-family: var(--serif); font-size: 28px; font-weight: 500; line-height: 1.3; margin: 16px 0 10px; }
+  .focus-groot .f-stap { font-size: 15px; color: var(--inkt2); }
+  .focus-groot .f-klaar { margin-top: 30px; font-family: var(--mono); font-size: 12.5px; letter-spacing: .12em; border: 1.5px solid var(--inkt); background: none; padding: 10px 20px; cursor: pointer; color: var(--inkt); text-transform: uppercase; }
+
+  #view-chat { display: none; flex-direction: column; padding: 4px 18px 0; max-width: 680px; height: 100%; }
+  #view-chat.actief { display: flex; }
+  #berichten { flex: 1; overflow-y: auto; padding: 4px 0; -webkit-overflow-scrolling: touch; }
   .msg { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--lijn); }
   .avatar { width: 27px; height: 27px; border-radius: 50%; border: 1.5px solid var(--inkt); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 14.5px; flex-shrink: 0; color: var(--inkt); }
-  .msg.donna .avatar { border-color: var(--accent); color: var(--accent); }
-  .msg .tekst { font-size: 15px; min-width: 0; word-wrap: break-word; white-space: pre-wrap; flex: 1; }
-  .msg.donna .tekst { font-family: var(--serif); font-size: 16px; }
-  .msg.ik .tekst, .msg.ik .avatar { color: var(--inkt2); border-color: var(--gedempt); }
-  .msg.stil { border: none; color: var(--gedempt); font-style: italic; font-size: 14.5px; }
-  .leeg { padding: 28px 0; color: var(--gedempt); font-size: 14.5px; font-family: var(--serif); font-style: italic; }
-  footer { border-top: 1.5px solid var(--inkt); background: var(--ivoor); padding: 18px 20px calc(22px + env(safe-area-inset-bottom)); text-align: center; }
-  .status { font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--gedempt); margin-bottom: 14px; min-height: 15px; }
-  .status.opname { color: var(--accent); }
-  .knop { width: 86px; height: 86px; border-radius: 50%; background: var(--inkt); color: var(--ivoor); border: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 14px rgba(26,25,22,.25); }
-  .knop svg { width: 32px; height: 32px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .knop.opname { background: var(--accent); animation: pols 1.2s ease-in-out infinite; }
-  .knop.bezig { opacity: .45; pointer-events: none; }
-  @keyframes pols { 0%,100% { box-shadow: 0 0 0 0 rgba(200,64,26,.35); } 50% { box-shadow: 0 0 0 18px rgba(200,64,26,0); } }
-  .voet { margin-top: 14px; }
-  .voet button { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; background: none; border: none; color: var(--gedempt); cursor: pointer; padding: 4px 8px; }
-  #koppel { display: none; padding: 26px 20px; }
+  .msg.bot-donna .avatar { border-color: var(--accent); color: var(--accent); }
+  .msg .m-tekst { font-size: 15px; line-height: 1.55; min-width: 0; word-wrap: break-word; white-space: pre-wrap; flex: 1; }
+  .msg.bot-donna .m-tekst { font-family: var(--serif); font-size: 16px; }
+  .msg.ik .m-tekst, .msg.ik .avatar { color: var(--inkt2); border-color: var(--gedempt); }
+  .msg.denkt { border: none; color: var(--gedempt); font-style: italic; font-size: 14.5px; }
+  .chat-invoer { display: flex; gap: 8px; align-items: center; border: 1.5px solid var(--inkt); padding: 4px 4px 4px 14px; margin: 10px 0 14px; background: var(--ivoor); }
+  .chat-invoer input { flex: 1; border: none; background: none; font-size: 15.5px; outline: none; color: var(--inkt); padding: 8px 0; font-family: var(--sans); }
+  .chat-invoer input::placeholder { color: var(--gedempt); }
+  .chat-invoer button { background: var(--inkt); border: none; color: var(--ivoor); width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  .doel-item { padding: 12px 0; border-bottom: 1px solid var(--lijn); }
+  .doel-item .d-titel { font-size: 15.5px; font-weight: 500; line-height: 1.35; }
+  .doel-item .d-meta { font-family: var(--mono); font-size: 12px; color: var(--gedempt); margin-top: 3px; }
+  .d-balk { height: 3px; background: var(--vlak); margin-top: 8px; }
+  .d-balk i { display: block; height: 3px; background: var(--accent); }
+  .proj { display: flex; align-items: baseline; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--lijn); cursor: pointer; }
+  .proj .p-naam { flex: 1; font-size: 15.5px; }
+  .proj .p-stat { font-family: var(--mono); font-size: 12px; color: var(--gedempt); white-space: nowrap; }
+  .visie-quote { font-family: var(--serif); font-size: 16.5px; line-height: 1.6; color: var(--inkt2); padding: 4px 0 10px; border-bottom: 1px solid var(--lijn); }
+  .visie-edit textarea { width: 100%; border: none; border-bottom: 1px solid var(--lijn); background: none; padding: 6px 0 10px; font-family: var(--serif); font-size: 16.5px; line-height: 1.6; color: var(--inkt2); min-height: 60px; resize: vertical; outline: none; }
+  .knopje { margin-top: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; border: 1px solid var(--inkt); background: none; color: var(--inkt); padding: 7px 14px; cursor: pointer; text-transform: uppercase; }
+  .knopje.stil { border-color: var(--lijn); color: var(--gedempt); }
+  .planner-invoer { display: flex; gap: 8px; padding: 10px 0; }
+  .planner-invoer input { flex: 1; border: none; border-bottom: 1px solid var(--lijn); background: none; font-size: 14.5px; outline: none; color: var(--inkt); padding: 6px 0; font-family: var(--sans); }
+  .planner-invoer button { background: none; border: 1px solid var(--inkt); color: var(--inkt); width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .zoek { display: flex; gap: 8px; align-items: center; border: 1.5px solid var(--inkt); padding: 4px 4px 4px 12px; margin-top: 16px; }
+  .zoek svg.ic { color: var(--gedempt); }
+  .zoek input { flex: 1; border: none; background: none; font-size: 15px; outline: none; color: var(--inkt); padding: 8px 0; font-family: var(--sans); }
+  .zoek button { background: var(--inkt); border: none; color: var(--ivoor); padding: 0 14px; height: 34px; cursor: pointer; font-family: var(--mono); font-size: 12.5px; }
+  #zoekResultaat { display: none; font-size: 14px; white-space: pre-wrap; padding: 12px 0; border-bottom: 1px solid var(--lijn); line-height: 1.6; }
+
+  .actie { padding: 13px 0; border-bottom: 1px solid var(--lijn); }
+  .actie .a-tekst { font-size: 15px; line-height: 1.5; margin-bottom: 9px; }
+  .actie .a-rij { display: flex; align-items: center; gap: 10px; }
+  .risk { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; border: 1px solid var(--inkt2); color: var(--inkt2); padding: 2px 7px; text-transform: uppercase; }
+  .risk.hoog, .risk.midden { border-color: var(--accent); color: var(--accent); }
+  .a-knoppen { margin-left: auto; display: flex; gap: 8px; }
+  .a-knoppen button { font-family: var(--mono); font-size: 12.5px; letter-spacing: .08em; padding: 8px 16px; cursor: pointer; }
+  .a-ja { background: var(--inkt); border: 1.5px solid var(--inkt); color: var(--ivoor); }
+  .a-nee { background: none; border: 1.5px solid var(--lijn); color: var(--inkt2); }
+
+  .timer { text-align: center; padding: 24px 0 20px; border: 1.5px solid var(--inkt); margin-top: 16px; }
+  .timer .t-cijfer { font-family: var(--mono); font-size: 48px; letter-spacing: .03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .timer .t-sub { font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; color: var(--gedempt); text-transform: uppercase; margin-top: 8px; }
+  .t-knoppen { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+  .t-knoppen button { font-family: var(--mono); font-size: 12.5px; font-weight: 500; border: 1px solid var(--inkt); background: none; color: var(--inkt); padding: 7px 14px; cursor: pointer; }
+  .t-knoppen button.stop { background: var(--accent); border-color: var(--accent); color: var(--ivoor); }
+
+  .week-dots { width: 100%; border-collapse: collapse; margin-top: 2px; }
+  .week-dots th { font-family: var(--mono); font-size: 11px; color: var(--gedempt); padding: 5px 2px; font-weight: 400; }
+  .week-dots td { text-align: center; padding: 5px 2px; }
+  .week-dots td:first-child { text-align: left; font-size: 12px; color: var(--inkt2); max-width: 92px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .wd { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--vlak); border: 1px solid var(--lijn); }
+  .wd.ja { background: var(--inkt); border-color: var(--inkt); }
+  .wd.nu { border-color: var(--accent); }
+  .wd.ja.nu { background: var(--accent); border-color: var(--accent); }
+
+  .lc-wrap { padding: 6px 0; }
+  .lc-wrap canvas { width: 100%; max-width: 420px; display: block; image-rendering: pixelated; }
+  .lc-meta { font-family: var(--mono); font-size: 12px; color: var(--gedempt); margin-top: 8px; }
+  .lc-invoer { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .lc-invoer input { border: 1px solid var(--lijn); background: var(--wit); padding: 7px 8px; font-size: 14px; font-family: var(--mono); outline: none; color: var(--inkt); }
+
+  .cl-kaart { border: 1px solid var(--lijn); background: var(--wit); margin-bottom: 10px; }
+  .cl-kop { display: flex; align-items: baseline; gap: 8px; padding: 11px 13px; cursor: pointer; user-select: none; }
+  .cl-titel { font-size: 15px; font-weight: 500; flex: 1; }
+  .cl-stat { font-family: var(--mono); font-size: 11.5px; color: var(--gedempt); white-space: nowrap; }
+  .cl-stat.af { color: var(--accent); }
+  .cl-items { display: none; border-top: 1px solid var(--lijn); padding: 2px 13px 8px; }
+  .cl-kaart.open .cl-items { display: block; }
+  .cl-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--lijn); cursor: pointer; font-size: 14.5px; user-select: none; }
+  .cl-item:last-child { border-bottom: none; }
+  .cl-box { width: 15px; height: 15px; border: 1.5px solid var(--inkt2); flex-shrink: 0; }
+  .cl-item.af .cl-box { background: var(--inkt); border-color: var(--inkt); }
+  .cl-item.af { color: var(--gedempt); text-decoration: line-through; }
+  .spiek { border-bottom: 1px solid var(--lijn); }
+  .spiek-kop { width: 100%; text-align: left; display: flex; gap: 9px; align-items: baseline; background: none; border: none; padding: 11px 0; cursor: pointer; font-size: 15px; font-weight: 500; color: var(--inkt); font-family: var(--sans); }
+  .spiek-kop .pijl { font-family: var(--mono); color: var(--gedempt); font-size: 13.5px; width: 10px; }
+  .spiek-body { display: none; padding: 0 0 12px 19px; }
+  .spiek.open .spiek-body { display: block; }
+  .spiek-sub { font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--gedempt); margin: 9px 0 3px; }
+  .spiek-body .r { font-size: 14px; color: var(--inkt2); padding: 2.5px 0; }
+
+  .mic { position: fixed; right: 18px; bottom: calc(78px + env(safe-area-inset-bottom)); width: 54px; height: 54px; border-radius: 50%; background: var(--inkt); color: var(--ivoor); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 12px rgba(26,25,22,.28); z-index: 50; }
+  .mic svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .mic.opname { background: var(--accent); animation: pols 1.2s ease-in-out infinite; }
+  .mic.bezig { opacity: .5; pointer-events: none; }
+  @keyframes pols { 0%,100% { box-shadow: 0 0 0 0 rgba(200,64,26,.35); } 50% { box-shadow: 0 0 0 14px rgba(200,64,26,0); } }
+  body.v-chat .mic { bottom: calc(148px + env(safe-area-inset-bottom)); }
+
+  nav { display: flex; border-top: 1.5px solid var(--inkt); background: var(--ivoor); padding: 9px 6px calc(12px + env(safe-area-inset-bottom)); }
+  nav button { flex: 1; background: none; border: none; cursor: pointer; color: var(--gedempt); text-align: center; padding: 2px 0; }
+  nav button svg.ic { width: 19px; height: 19px; margin: 0 auto 3px; display: block; }
+  nav button span { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; display: block; }
+  nav button.actief { color: var(--accent); }
+  nav button.actief svg.ic { stroke-width: 2.1; }
+  .spinner { padding: 24px 0; color: var(--gedempt); font-family: var(--mono); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; }
+
+  #koppel { display: none; position: fixed; inset: 0; background: var(--ivoor); z-index: 100; padding: calc(90px + env(safe-area-inset-top)) 24px 0; }
   #koppel.aan { display: block; }
-  #koppel .label { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--gedempt); text-transform: uppercase; margin-bottom: 8px; }
-  #koppel p { font-family: var(--serif); font-size: 16px; color: var(--inkt2); margin-bottom: 16px; }
+  #koppel .k-label { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--gedempt); text-transform: uppercase; margin-bottom: 8px; }
+  #koppel p { font-family: var(--serif); font-size: 16.5px; color: var(--inkt2); margin-bottom: 16px; }
   #koppel input { width: 100%; border: 1.5px solid var(--inkt); background: var(--wit); padding: 12px 14px; font-family: var(--mono); font-size: 15px; outline: none; color: var(--inkt); }
   #koppel button { margin-top: 12px; font-family: var(--mono); font-size: 12.5px; letter-spacing: .12em; border: 1.5px solid var(--inkt); background: var(--inkt); color: var(--ivoor); padding: 11px 22px; cursor: pointer; text-transform: uppercase; }
-  body.gekoppeld #koppel { display: none; }
-  body:not(.gekoppeld) main, body:not(.gekoppeld) footer { display: none; }
 </style>
 </head>
-<body>
+<body class="v-vandaag">
 <header>
-  <div class="label" id="datum">&nbsp;</div>
-  <h1>Donna <span style="color:var(--accent)">Voice</span></h1>
+  <div>
+    <div class="datum" id="datum">&nbsp;</div>
+    <h1 id="paginaTitel">Vandaag</h1>
+  </div>
+  <div class="hdr-stat">
+    <div id="statRegel">&nbsp;</div>
+    <button class="focus-knop" id="focusKnop">Focus</button>
+  </div>
 </header>
 
+<main>
+  <div class="view actief" id="view-vandaag">
+    <div class="focus-groot">
+      <div class="f-label">Eén ding</div>
+      <h3 id="focusTaak">—</h3>
+      <div class="f-stap" id="focusStap"></div>
+      <button class="f-klaar" id="focusKlaar">Afgerond</button>
+    </div>
+    <div class="verberg-in-focus">
+      <button class="sectie-kop" id="naarTaken">Taken <svg class="ic" viewBox="0 0 24 24" style="width:11px;height:11px"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div id="takenLijst"><div class="spinner">Laden</div></div>
+      <div class="hint">nummer = afvinken · taak = stappenplan · TAKEN = volledige lijst</div>
+      <div class="sectie-kop">Agenda</div>
+      <div id="agendaLijst" class="tijdlijn"><div class="leeg" style="margin-left:14px">—</div></div>
+      <div class="hint">tik op de agenda om Google Calendar te openen</div>
+      <button class="knopje" id="plannerKnop" style="margin-top:14px">Plan mijn dag</button>
+      <div class="hint" id="plannerMelding" style="display:none"></div>
+    </div>
+    <div class="timer">
+      <div class="t-cijfer" id="timerTijd">25:00</div>
+      <div class="t-sub" id="timerSub">Kies een blok — één ding</div>
+      <div class="t-knoppen">
+        <button data-min="25">25</button>
+        <button data-min="50">50</button>
+        <button data-min="90">90</button>
+        <button class="stop" id="timerStop" style="display:none">STOP</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-taken">
+    <button class="terug" id="terugVandaag">&larr; Vandaag</button>
+    <div class="sectie-kop">Vandaag</div>
+    <div id="takenVandaag"><div class="spinner">Laden</div></div>
+    <div class="sectie-kop">Backlog</div>
+    <div id="takenBacklog"></div>
+    <div class="hint">tik ○ om af te vinken · tik op de prioriteit om te wisselen · kalender = inplannen in je agenda</div>
+  </div>
+
+  <div class="view" id="view-chat">
+    <div id="berichten"></div>
+    <div class="chat-invoer">
+      <input id="chatInput" placeholder="Schrijf aan Donna…" autocomplete="off">
+      <button id="chatKnop" aria-label="Versturen"><svg class="ic" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
+    </div>
+  </div>
+
+  <div class="view" id="view-doelen">
+    <div class="zoek">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="zoekInput" placeholder="Zoek in taken, notities, doelen, profiel" autocomplete="off">
+      <button id="zoekKnop">ZOEK</button>
+    </div>
+    <div id="zoekResultaat"></div>
+    <div class="sectie-kop">Projecten</div>
+    <div id="projectenLijst"><div class="spinner">Laden</div></div>
+    <div class="sectie-kop">Maanddoelen</div>
+    <div id="maandDoelen"></div>
+    <div class="planner-invoer"><input id="maandInput" placeholder="Nieuw maanddoel"><button data-doel="maand" aria-label="Toevoegen"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <div class="sectie-kop">Kwartaaldoelen</div>
+    <div id="kwartaalDoelen"></div>
+    <div class="planner-invoer"><input id="kwartaalInput" placeholder="Nieuw kwartaaldoel"><button data-doel="kwartaal" aria-label="Toevoegen"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <div class="sectie-kop">Jaardoelen</div>
+    <div id="jaarDoelen"></div>
+    <div class="planner-invoer"><input id="jaarInput" placeholder="Nieuw jaardoel"><button data-doel="jaar" aria-label="Toevoegen"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <div class="sectie-kop">Visie</div>
+    <div class="visie-quote" id="visieQuote">—</div>
+    <div class="visie-edit" id="visieEdit" style="display:none">
+      <textarea id="visieTekst"></textarea>
+      <button class="knopje" id="visieOpslaan">Opslaan</button>
+    </div>
+    <button class="knopje stil" id="visieBewerk">Bewerk</button>
+  </div>
+
+  <div class="view" id="view-acties">
+    <div class="sectie-kop" style="margin-top:16px">Wacht op jouw goedkeuring</div>
+    <div id="actiesLijst"><div class="spinner">Laden</div></div>
+    <div class="sectie-kop">Habits</div>
+    <div class="habit-rij" id="habitsGrid"></div>
+    <div class="sectie-kop">Systemen</div>
+    <div id="systemenLijsten"><div class="spinner">Laden</div></div>
+  </div>
+
+  <div class="view" id="view-lockin">
+    <div class="sectie-kop" style="margin-top:16px">Tijd deze week</div>
+    <div id="tijdStats" class="leeg">—</div>
+    <div class="sectie-kop">Weekraster</div>
+    <div style="overflow-x:auto"><table class="week-dots" id="weekRaster"></table></div>
+    <div class="sectie-kop">Spiekbrieven</div>
+    <div id="spiekbrieven"></div>
+    <div class="sectie-kop">Je leven in weken</div>
+    <div class="lc-wrap">
+      <div class="lc-invoer"><input type="date" id="lcGeb"><button class="knopje" id="lcOpslaan" style="margin-top:0">Toon</button></div>
+      <canvas id="lcCanvas" width="416" height="720"></canvas>
+      <div class="lc-meta" id="lcMeta"></div>
+    </div>
+  </div>
+</main>
+
 <div id="koppel">
-  <div class="label">Eenmalig koppelen</div>
+  <div class="k-label">Eenmalig koppelen</div>
   <p>Vul je koppelcode in. Die blijft op dit toestel bewaard.</p>
   <input id="codeInput" placeholder="koppelcode" autocomplete="off" autocapitalize="none">
   <button id="codeOpslaan">Koppel</button>
 </div>
 
-<main id="historie"></main>
+<button class="mic" id="micKnop" aria-label="Spreek tegen Donna">
+  <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+</button>
 
-<footer>
-  <div class="status" id="status">Tik om op te nemen</div>
-  <button class="knop" id="recKnop" aria-label="Opnemen">
-    <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-  </button>
-  <div class="voet"><button id="wisKnop">Geschiedenis wissen</button></div>
-</footer>
+<nav>
+  <button class="actief" data-view="vandaag"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Vandaag</span></button>
+  <button data-view="chat"><svg class="ic" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.7-3.4 8.5 8.5 0 0 1 8.4-9 8.38 8.38 0 0 1 8.5 8.5Z"/></svg><span>Chat</span></button>
+  <button data-view="doelen"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Doelen</span></button>
+  <button data-view="acties"><svg class="ic" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg><span>Acties</span></button>
+  <button data-view="lockin"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>Stats</span></button>
+</nav>
 
 <script>
   var API = 'https://script.google.com/macros/s/AKfycbxOYmM7FAgykrRm_5HmugVwm42VT7TZJksF5K6KD7gu68JTI9mqO__W4ctCgSaXbfRGiw/exec';
-  function el(id) { return document.getElementById(id); }
-  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function md(s) { return esc(s).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/_([^_\n]+)_/g,'<i>$1</i>').replace(/`([^`\n]+)`/g,'<code>$1</code>'); }
-
-  var NL_DAG = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
-  var NL_MAAND = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
-  var nu = new Date();
-  el('datum').textContent = NL_DAG[nu.getDay()] + ' ' + nu.getDate() + ' ' + NL_MAAND[nu.getMonth()];
-
-  /* ===== Koppelcode ===== */
+  var S = { data: null, alle: null, bezig: false, chats: { donna: leesChat() } };
   function secret() { try { return localStorage.getItem('dv_secret') || ''; } catch (e) { return ''; } }
   function checkKoppeling() {
     var aan = !!secret();
-    document.body.classList.toggle('gekoppeld', aan);
     el('koppel').classList.toggle('aan', !aan);
+    return aan;
   }
-  el('codeOpslaan').addEventListener('click', function() {
-    var v = el('codeInput').value.trim();
-    if (!v) return;
-    try { localStorage.setItem('dv_secret', v); } catch (e) {}
-    checkKoppeling();
-  });
+  function leesChat() {
+    try { var h = JSON.parse(localStorage.getItem('dos_chat') || 'x'); if (h && h.length) return h; } catch (e) {}
+    return [{ rol: 'bot', tekst: 'Ik luister. Dump alles — ik orden het.' }];
+  }
+  function saveChat() { try { localStorage.setItem('dos_chat', JSON.stringify(S.chats.donna.slice(-100))); } catch (e) {} }
+  function run(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return fetch(API + '?app=' + encodeURIComponent(secret()), { method: 'POST', body: JSON.stringify({ fn: fn, args: args }) })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.ok) return d.result;
+        if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(); }
+        throw new Error((d && d.fout) || 'serverfout');
+      });
+  }
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function md(s) {
+    return esc(s).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/_([^_\n]+)_/g, '<i>$1</i>').replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  var KAL_SVG = '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
 
-  /* ===== Historie (lokaal) ===== */
-  function leesHist() { try { return JSON.parse(localStorage.getItem('dv_hist') || '[]'); } catch (e) { return []; } }
-  function schrijfHist(h) { try { localStorage.setItem('dv_hist', JSON.stringify(h.slice(-100))); } catch (e) {} }
-  function renderHist() {
-    var h = leesHist(), m = el('historie');
-    m.innerHTML = h.length ? h.map(function(x) {
-      return '<div class="msg ' + (x.wie === 'donna' ? 'donna' : 'ik') + '">' +
-        '<div class="avatar">' + (x.wie === 'donna' ? 'D' : 'M') + '</div>' +
-        '<div class="tekst">' + md(x.tekst) + '</div></div>';
-    }).join('') : '<div class="leeg">Spreek — ik orden het.</div>';
-    m.scrollTop = m.scrollHeight;
-  }
-  function voegToe(wie, tekst) {
-    var h = leesHist();
-    h.push({ wie: wie, tekst: tekst, t: Date.now() });
-    schrijfHist(h);
-    renderHist();
-  }
-  el('wisKnop').addEventListener('click', function() {
-    schrijfHist([]);
-    renderHist();
-  });
+  var TITELS = { vandaag: 'Vandaag', taken: 'Taken', chat: 'Gesprek', doelen: 'Doelen', acties: 'Acties', lockin: 'Stats' };
 
-  /* ===== Opname ===== */
-  var R = { rec: null, chunks: [], bezig: false, t0: 0, klok: null };
-  function status(t, opname) {
-    el('status').textContent = t;
-    el('status').classList.toggle('opname', !!opname);
+  function sorteerHabits(habits) {
+    var laatst = habits.filter(function(h){ return /alcohol|rook|gerookt/i.test(h.naam); });
+    var eerst = habits.filter(function(h){ return !/alcohol|rook|gerookt/i.test(h.naam); });
+    return eerst.concat(laatst);
   }
-  function kiesMime() {
-    var opts = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
-    for (var i = 0; i < opts.length; i++) {
-      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(opts[i])) return opts[i];
+
+  function render(d) {
+    S.data = d;
+    el('datum').textContent = d.datum;
+    document.body.classList.toggle('focus', d.focus);
+    el('focusKnop').classList.toggle('aan', d.focus);
+    el('focusKnop').textContent = d.focus ? 'FOCUS AAN' : 'FOCUS';
+    var open = d.taken.length, af = d.habits.filter(function(h){ return h.done; }).length;
+    el('statRegel').innerHTML = '<div><b id="pendingLink">' + pad2(d.pending) + '</b> acties</div>' +
+      '<div><span style="color:var(--inkt)">' + pad2(open) + '</span> open</div>' +
+      '<div>' + pad2(af) + '/' + pad2(d.habits.length) + ' habits</div>';
+    if (d.focus && d.taken[0]) {
+      el('focusTaak').textContent = d.taken[0].taak;
+      el('focusStap').textContent = d.taken[0].stap ? 'eerste stap · ' + d.taken[0].stap : 'begin — twee minuten is genoeg';
+      el('focusKlaar').dataset.id = d.taken[0].id;
+    } else if (d.focus) {
+      el('focusTaak').textContent = 'Niets open';
+      el('focusStap').textContent = 'dump iets bij Donna of verlaat focus';
     }
-    return '';
+    el('takenLijst').innerHTML = d.taken.length ? d.taken.map(function(t, i) {
+      return '<div class="taak' + (i === 0 ? ' top' : '') + '" data-tid="' + esc(t.id) + '">' +
+        '<button class="nr" data-id="' + esc(t.id) + '" aria-label="Afvinken">' + pad2(i + 1) + '</button>' +
+        '<div class="t-body"><div class="t-titel">' + esc(t.taak) + '</div>' +
+        (t.stap ? '<div class="t-stap">eerste stap · ' + esc(t.stap) + '</div>' : '') + '</div>' +
+        '<div class="t-meta">' + (t.prio === 'U' ? '<span class="tag u">U</span>' : '') + '</div></div>';
+    }).join('') : '<div class="leeg">Niets open. Stilte is ook een prestatie.</div>';
+    var habits = sorteerHabits(d.habits);
+    var maxStreak = Math.max.apply(null, habits.map(function(h){ return h.streak; }).concat([0]));
+    el('habitsGrid').innerHTML = habits.map(function(h) {
+      var top = h.done && h.streak >= 3 && h.streak === maxStreak;
+      var kleur = top ? 'var(--accent)' : 'var(--inkt)';
+      return '<div class="habit' + (h.done ? ' af' : '') + (top ? ' top' : '') + '" data-habit="' + esc(h.naam) + '">' +
+        '<div class="ring"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" stroke="var(--lijn)" stroke-width="3" fill="none"/>' +
+        '<circle cx="23" cy="23" r="20" stroke="' + kleur + '" stroke-width="3" fill="none" stroke-dasharray="125.7" stroke-dashoffset="' + (h.done ? 0 : 125.7) + '"/></svg>' +
+        '<span class="cijfer">' + h.streak + '</span></div>' +
+        '<div class="h-naam">' + esc(h.naam) + '</div></div>';
+    }).join('');
+    el('agendaLijst').innerHTML = d.agenda.length ? d.agenda.map(function(a, i) {
+      var hoogte = a.duurMin ? Math.max(34, Math.min(120, Math.round(a.duurMin / 60 * 44))) : 34;
+      var duurTekst = a.duurMin ? (a.duurMin >= 60 ? (Math.round(a.duurMin / 6) / 10) + ' u' : a.duurMin + ' min') : 'hele dag';
+      return '<div class="blok' + (i === 0 ? ' eerste' : '') + '" style="min-height:' + hoogte + 'px"><span class="b-tijd">' + esc(a.tijd) + '</span>' +
+        '<div class="b-titel">' + esc(a.titel) + '</div><div class="b-duur">' + duurTekst + '</div></div>';
+    }).join('') : '<div class="leeg" style="margin-left:14px">Leeg — ruimte voor je nummer één.</div>';
   }
-  function tijd() {
-    var s = Math.round((Date.now() - R.t0) / 1000);
-    var m = Math.floor(s / 60); s = s % 60;
-    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  function laad() { run('apiDashboard').then(render).catch(function() { el('takenLijst').innerHTML = '<div class="leeg">Kon niet laden — ververs de pagina.</div>'; }); }
+
+  /* ===== Volledige takenlijst (verdieping) ===== */
+  function taakRij(t) {
+    return '<div class="taak" data-tid="' + esc(t.id) + '">' +
+      '<button class="vink" data-klaar="' + esc(t.id) + '" aria-label="Afvinken"><svg viewBox="0 0 24 24" class="ic" style="width:16px;height:16px"><circle cx="12" cy="12" r="9"/></svg></button>' +
+      '<div class="t-body"><div class="t-titel">' + esc(t.taak) + '</div>' +
+      (t.stap ? '<div class="t-stap">eerste stap · ' + esc(t.stap) + '</div>' : '') + '</div>' +
+      '<div class="t-meta"><button class="tag' + (t.prio === 'U' ? ' u' : '') + '" data-prio="' + esc(t.id) + '">' + esc(t.prio) + '</button>' +
+      '<button class="plan" data-planrow="' + esc(t.id) + '" aria-label="Inplannen">' + KAL_SVG + '</button></div></div>' +
+      '<div class="planblok" id="plan-' + esc(t.id) + '">' +
+      '<input type="datetime-local" id="pd-' + esc(t.id) + '">' +
+      '<select id="pu-' + esc(t.id) + '"><option value="30">30 min</option><option value="60" selected>1 uur</option><option value="90">90 min</option></select>' +
+      '<button class="knopje" style="margin-top:0" data-planzet="' + esc(t.id) + '" data-taak="' + esc(t.taak) + '">Zet in agenda</button></div>';
   }
-  function startOpname() {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
-      var mime = kiesMime();
-      R.rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-      R.chunks = [];
-      R.rec.ondataavailable = function(ev) { if (ev.data && ev.data.size) R.chunks.push(ev.data); };
-      R.rec.onstop = function() {
-        stream.getTracks().forEach(function(tr) { tr.stop(); });
-        verstuur(new Blob(R.chunks, { type: R.rec.mimeType || 'audio/mp4' }));
-      };
-      R.rec.start();
-      R.t0 = Date.now();
-      el('recKnop').classList.add('opname');
-      status('Opname — ' + tijd() + ' — tik om te stoppen', true);
-      R.klok = setInterval(function() { status('Opname — ' + tijd() + ' — tik om te stoppen', true); }, 1000);
+  function renderTaken() {
+    var a = S.alle;
+    el('takenVandaag').innerHTML = a.vandaag.length ? a.vandaag.map(taakRij).join('') : '<div class="leeg">Niets open vandaag.</div>';
+    el('takenBacklog').innerHTML = a.backlog.length ? a.backlog.map(taakRij).join('') : '<div class="leeg">Backlog is leeg.</div>';
+  }
+  function laadTaken() {
+    el('takenVandaag').innerHTML = '<div class="spinner">Laden</div>';
+    run('apiAlleTaken').then(function(a) { S.alle = a; renderTaken(); });
+  }
+  function vindTaak(id) {
+    var alles = S.alle.vandaag.concat(S.alle.backlog);
+    return alles.filter(function(t){ return t.id === id; })[0];
+  }
+
+  document.addEventListener('click', function(ev) {
+    var tb = ev.target.closest('.t-body');
+    if (tb && tb.closest('#takenLijst, #takenVandaag, #takenBacklog')) {
+      var kaart = tb.closest('.taak'), tid = kaart.dataset.tid;
+      var ex = el('stap-' + tid);
+      if (ex) { ex.remove(); kaart.classList.remove('lift'); return; }
+      kaart.classList.add('lift');
+      kaart.insertAdjacentHTML('afterend', '<div class="stappen" id="stap-' + tid + '"><div class="spinner">Donna maakt je stappenplan</div></div>');
+      run('apiStappenplan', tid).then(function(r) {
+        var dv = el('stap-' + tid); if (!dv) return;
+        dv.innerHTML = r.ok ? md(r.plan) : '<div class="leeg">Kon geen plan maken — tik nog eens.</div>';
+      }).catch(function() { var dv = el('stap-' + tid); if (dv) dv.innerHTML = '<div class="leeg">Kon geen plan maken — tik nog eens.</div>'; });
+      return;
+    }
+    var pj = ev.target.closest('.proj');
+    if (pj && pj.dataset.proj != null) {
+      var ix = pj.dataset.proj, det = el('projdet-' + ix);
+      if (det) { det.remove(); return; }
+      var p = (S.projecten || [])[ix];
+      if (!p) return;
+      var kop = '<div class="pd-kop"><span>' + pad2(p.open) + ' open</span><span>' + pad2(p.af) + ' afgerond</span><span style="color:var(--accent)">' + p.pct + '%</span></div>' +
+        '<div class="d-balk" style="margin:6px 0 10px"><i style="width:' + p.pct + '%"></i></div>';
+      var inhoud = (p.taken && p.taken.length) ? p.taken.map(function(t2) {
+        return '<div class="pd-rij">' + (t2.prio === 'U' ? '<span class="tag u">U</span> ' : '') + esc(t2.taak) +
+          (t2.stap ? '<div class="pd-stap">eerste stap · ' + esc(t2.stap) + '</div>' : '') + '</div>';
+      }).join('') : '<div class="leeg">Geen open taken in dit project.</div>';
+      pj.insertAdjacentHTML('afterend', '<div class="proj-detail" id="projdet-' + ix + '">' + kop + inhoud + '</div>');
+      return;
+    }
+    var t = ev.target.closest('.nr');
+    if (t) {
+      var id = t.dataset.id;
+      S.data.taken = S.data.taken.filter(function(x) { return x.id !== id; });
+      render(S.data);
+      run('apiCompleteTask', id).catch(laad);
+      return;
+    }
+    var fk = ev.target.closest('#focusKlaar');
+    if (fk && fk.dataset.id) {
+      var fid = fk.dataset.id;
+      S.data.taken = S.data.taken.filter(function(x) { return x.id !== fid; });
+      render(S.data);
+      run('apiCompleteTask', fid).catch(laad);
+      return;
+    }
+    var h = ev.target.closest('.habit');
+    if (h) {
+      var naam = h.dataset.habit;
+      S.data.habits.forEach(function(x) {
+        if (x.naam === naam) { x.done = !x.done; x.streak = Math.max(0, x.streak + (x.done ? 1 : -1)); }
+      });
+      render(S.data);
+      run('apiToggleHabit', naam).catch(laad);
+      return;
+    }
+    var ag = ev.target.closest('#agendaLijst');
+    if (ag) { window.open('https://calendar.google.com/calendar/u/0/r', '_blank'); return; }
+    var pl = ev.target.closest('#pendingLink');
+    if (pl) { wisselView('acties'); return; }
+    var kl = ev.target.closest('[data-klaar]');
+    if (kl && S.alle) {
+      var kid = kl.dataset.klaar;
+      S.alle.vandaag = S.alle.vandaag.filter(function(x){ return x.id !== kid; });
+      S.alle.backlog = S.alle.backlog.filter(function(x){ return x.id !== kid; });
+      renderTaken();
+      run('apiCompleteTask', kid).catch(laadTaken);
+      return;
+    }
+    var pr = ev.target.closest('[data-prio]');
+    if (pr && S.alle) {
+      var pid = pr.dataset.prio, tk = vindTaak(pid);
+      if (tk) {
+        tk.prio = tk.prio === 'U' ? 'B' : (tk.prio === 'B' ? 'O' : 'U');
+        renderTaken();
+        run('apiZetPrio', pid, tk.prio).catch(laadTaken);
+      }
+      return;
+    }
+    var pb = ev.target.closest('[data-planrow]');
+    if (pb) {
+      var blok = el('plan-' + pb.dataset.planrow);
+      if (blok) blok.classList.toggle('open');
+      return;
+    }
+    var pz = ev.target.closest('[data-planzet]');
+    if (pz) {
+      var zid = pz.dataset.planzet, wanneer = el('pd-' + zid).value, duur = el('pu-' + zid).value;
+      if (!wanneer) { pz.textContent = 'Kies eerst datum/tijd'; return; }
+      pz.textContent = '…';
+      run('apiPlanOp', pz.dataset.taak, wanneer, duur).then(function(r) {
+        var blok = el('plan-' + zid);
+        blok.outerHTML = '<div class="plan-ok">' + (r.ok ? '→ in je agenda gezet' : esc(r.fout || 'mislukt')) + '</div>';
+      });
+      return;
+    }
+  });
+  el('naarTaken').addEventListener('click', function() { wisselView('taken'); });
+  el('terugVandaag').addEventListener('click', function() { wisselView('vandaag'); });
+
+  /* ===== Planner (Reclaim-stijl): taken/habits/buffers automatisch in de agenda ===== */
+  el('plannerKnop').addEventListener('click', function() {
+    var k = el('plannerKnop'), m = el('plannerMelding');
+    k.textContent = 'Donna plant…'; k.disabled = true;
+    run('apiPlannerRun').then(function(r) {
+      k.textContent = 'Plan mijn dag'; k.disabled = false;
+      m.style.display = 'block'; m.textContent = r.melding;
+      laad();
     }).catch(function() {
-      status('Geen microfoontoegang — sta die toe bij instellingen');
+      k.textContent = 'Plan mijn dag'; k.disabled = false;
+      m.style.display = 'block'; m.textContent = 'Plannen mislukte — probeer opnieuw.';
+    });
+  });
+
+  el('focusKnop').addEventListener('click', function() {
+    var aan = !document.body.classList.contains('focus');
+    S.data.focus = aan;
+    render(S.data);
+    run('apiFocusMode', aan).catch(laad);
+  });
+
+  /* ===== Chat (alleen Donna) ===== */
+  function herrenderChat() {
+    el('berichten').innerHTML = '';
+    S.chats.donna.forEach(function(m) { maakBerichtDiv(m.rol, m.tekst); });
+  }
+  function maakBerichtDiv(rol, tekst) {
+    var div = document.createElement('div');
+    if (rol === 'denkt') {
+      div.className = 'msg denkt';
+      div.textContent = tekst;
+    } else {
+      var isBot = rol === 'bot';
+      div.className = 'msg ' + (isBot ? 'bot-donna' : 'ik');
+      div.innerHTML = '<div class="avatar">' + (isBot ? 'D' : 'M') + '</div><div class="m-tekst">' + md(tekst) + '</div>';
+    }
+    el('berichten').appendChild(div);
+    el('berichten').scrollTop = el('berichten').scrollHeight;
+    return div;
+  }
+  function voegBericht(rol, tekst) {
+    if (rol !== 'denkt') { S.chats.donna.push({ rol: rol, tekst: tekst }); saveChat(); }
+    return maakBerichtDiv(rol, tekst);
+  }
+  function verstuur() {
+    if (S.bezig) return;
+    var v = el('chatInput').value.trim(); if (!v) return;
+    el('chatInput').value = '';
+    voegBericht('ik', v);
+    var wacht = voegBericht('denkt', 'Donna denkt na');
+    S.bezig = true;
+    run('apiChat', v, 'donna').then(function(antw) {
+      wacht.remove();
+      S.chats.donna.push({ rol: 'bot', tekst: antw });
+      saveChat();
+      herrenderChat();
+      S.bezig = false;
+      laad();
+    }).catch(function() { wacht.textContent = 'Er ging iets mis — probeer opnieuw.'; S.bezig = false; });
+  }
+  el('chatKnop').addEventListener('click', verstuur);
+  el('chatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') verstuur(); });
+
+  /* ===== Voice — geïntegreerde opname (PWA draait buiten Googles sandbox) ===== */
+  var REC = { rec: null, chunks: [], aan: false };
+  function micMelding(tekst) {
+    S.chats.donna.push({ rol: 'bot', tekst: tekst });
+    saveChat();
+    herrenderChat();
+  }
+  el('micKnop').addEventListener('click', function() {
+    var knop = el('micKnop');
+    if (knop.classList.contains('bezig')) return;
+    if (REC.aan) {
+      REC.aan = false;
+      knop.classList.remove('opname');
+      knop.classList.add('bezig');
+      try { REC.rec.stop(); } catch (e2) { knop.classList.remove('bezig'); }
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { wisselView('chat'); micMelding('Opnemen kan hier niet — open de app via het beginscherm-icoon.'); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      var mime = '';
+      ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].some(function(m2) {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m2)) { mime = m2; return true; }
+        return false;
+      });
+      REC.rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      REC.chunks = [];
+      REC.rec.ondataavailable = function(ev) { if (ev.data && ev.data.size) REC.chunks.push(ev.data); };
+      REC.rec.onstop = function() {
+        stream.getTracks().forEach(function(tr) { tr.stop(); });
+        var blob = new Blob(REC.chunks, { type: REC.rec.mimeType || 'audio/mp4' });
+        if (blob.size < 1000) { el('micKnop').classList.remove('bezig'); return; }
+        var fr = new FileReader();
+        fr.onloadend = function() {
+          var b64 = String(fr.result).split(',')[1] || '';
+          run('apiVoice', b64, blob.type || 'audio/mp4').then(function(d) {
+            el('micKnop').classList.remove('bezig');
+            wisselView('chat');
+            if (d && d.ok) {
+              S.chats.donna.push({ rol: 'ik', tekst: d.tekst || '(opname)' });
+              S.chats.donna.push({ rol: 'bot', tekst: d.antwoord || 'Oké.' });
+              saveChat();
+              herrenderChat();
+              laad();
+            } else {
+              micMelding((d && d.fout) || 'Ik kon niets verstaan — probeer het nog eens.');
+            }
+          }).catch(function() {
+            el('micKnop').classList.remove('bezig');
+            wisselView('chat');
+            micMelding('Versturen lukte niet — probeer het nog eens.');
+          });
+        };
+        fr.readAsDataURL(blob);
+      };
+      REC.rec.start();
+      REC.aan = true;
+      knop.classList.add('opname');
+    }).catch(function() {
+      wisselView('chat');
+      micMelding('Geen microfoontoegang — sta die toe in je instellingen.');
+    });
+  });
+
+  /* ===== Doelen: projecten → maand → kwartaal → jaar → visie ===== */
+  function doelHtml(x) {
+    var pct = parseInt(x.voortgang) || 0;
+    return '<div class="doel-item"><div class="d-titel">' + esc(x.doel) + '</div>' +
+      '<div class="d-meta">' + esc(x.domein) + (x.deadline ? ' · ' + esc(x.deadline) : '') + (pct ? ' · ' + pct + '%' : '') + '</div>' +
+      (pct ? '<div class="d-balk"><i style="width:' + pct + '%"></i></div>' : '') + '</div>';
+  }
+  function laadDoelen() {
+    run('apiDoelenReview').then(function(d) {
+      S.projecten = d.projecten;
+      el('projectenLijst').innerHTML = d.projecten.length ? d.projecten.map(function(p, i) {
+        return '<div class="proj" data-proj="' + i + '"><span class="p-naam">' + esc(p.naam) + '</span>' +
+          '<span class="p-stat">' + pad2(p.open) + ' open · ' + pad2(p.af) + ' af · ' + p.pct + '%</span></div>';
+      }).join('') : '<div class="leeg">Nog geen projecten.</div>';
+      var groep = function(tp) { return d.doelen.filter(function(x) { return (x.type || 'kwartaal') === tp; }); };
+      var rj = function(lijst, tekst) { return lijst.length ? lijst.map(doelHtml).join('') : '<div class="leeg">' + tekst + '</div>'; };
+      el('maandDoelen').innerHTML = rj(groep('maand'), 'Nog leeg — wat moet er deze maand staan?');
+      el('kwartaalDoelen').innerHTML = rj(groep('kwartaal'), 'Nog leeg.');
+      el('jaarDoelen').innerHTML = rj(groep('jaar'), 'Nog leeg.');
+      el('visieQuote').textContent = d.visie ? '"' + d.visie + '"' : 'Nog geen visie — tik op Bewerk.';
+      el('visieTekst').value = d.visie || '';
     });
   }
-  function stopOpname() {
-    clearInterval(R.klok);
-    el('recKnop').classList.remove('opname');
-    el('recKnop').classList.add('bezig');
-    status('Donna luistert');
-    try { R.rec.stop(); } catch (e) { klaar(); }
+  document.querySelectorAll('[data-doel]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var inp = el(b.dataset.doel + 'Input');
+      var v = inp.value.trim(); if (!v) return;
+      inp.value = '';
+      run('apiVoegDoel', b.dataset.doel, v, 'discipline', '').then(laadDoelen);
+    });
+  });
+  el('visieBewerk').addEventListener('click', function() {
+    var e = el('visieEdit');
+    var open = e.style.display !== 'none';
+    e.style.display = open ? 'none' : 'block';
+    el('visieBewerk').textContent = open ? 'Bewerk' : 'Sluit';
+  });
+  el('visieOpslaan').addEventListener('click', function() {
+    var b = el('visieOpslaan'); b.textContent = '…';
+    run('apiZetProfielWaarde', 'visie', el('visieTekst').value).then(function() {
+      b.textContent = 'Opslaan';
+      el('visieEdit').style.display = 'none';
+      el('visieBewerk').textContent = 'Bewerk';
+      laadDoelen();
+    });
+  });
+  function zoek() {
+    var q = el('zoekInput').value.trim(); if (!q) return;
+    var res = el('zoekResultaat');
+    res.style.display = 'block'; res.textContent = 'Zoeken…';
+    run('apiZoek', q).then(function(t) { res.innerHTML = md(t); });
   }
-  function klaar() {
-    el('recKnop').classList.remove('bezig');
-    status('Tik om op te nemen');
+  el('zoekKnop').addEventListener('click', zoek);
+  el('zoekInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') zoek(); });
+
+  /* ===== Acties ===== */
+  function laadActies() {
+    laadChecklists();
+    laad();
+    run('apiActies').then(function(lijst) {
+      el('actiesLijst').innerHTML = lijst.length ? lijst.map(function(a) {
+        return '<div class="actie" data-actie="' + esc(a.id) + '"><div class="a-tekst">' + md(a.omschrijving) + '</div>' +
+          '<div class="a-rij"><span class="risk ' + esc(a.risk) + '">' + esc(a.risk || 'geen') + '</span>' +
+          '<div class="a-knoppen"><button class="a-nee" data-beslis="nee" data-id="' + esc(a.id) + '">NEE</button>' +
+          '<button class="a-ja" data-beslis="ja" data-id="' + esc(a.id) + '">DOEN</button></div></div></div>';
+      }).join('') : '<div class="leeg">Niets te beoordelen. Donna wacht nergens op.</div>';
+    });
   }
-  function verstuur(blob) {
-    if (!blob || blob.size < 1000) { voegToe('stil', ''); klaar(); status('Te kort — probeer opnieuw'); return; }
-    var fr = new FileReader();
-    fr.onloadend = function() {
-      var b64 = String(fr.result).split(',')[1] || '';
-      fetch(API + '?voice=' + encodeURIComponent(secret()), { method: 'POST', body: JSON.stringify({ b64: b64, mime: blob.type || 'audio/mp4' }) })
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d && d.ok) {
-            voegToe('ik', d.tekst || '(opname)');
-            voegToe('donna', d.antwoord || 'Oké.');
-            status('Tik om op te nemen');
-          } else {
-            status((d && d.fout === 'secret') ? 'Koppelcode klopt niet' : ((d && d.fout) || 'Niets verstaan — probeer opnieuw'));
-            if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(); }
-          }
-          klaar2();
-        })
-        .catch(function() { status('Geen verbinding — bericht niet verstuurd'); klaar2(); });
-    };
-    fr.readAsDataURL(blob);
-  }
-  function klaar2() { el('recKnop').classList.remove('bezig'); }
-  el('recKnop').addEventListener('click', function() {
-    if (el('recKnop').classList.contains('opname')) stopOpname();
-    else startOpname();
+  document.addEventListener('click', function(ev) {
+    var b = ev.target.closest('[data-beslis]');
+    if (!b) return;
+    var kaart = b.closest('.actie');
+    kaart.style.opacity = '.35';
+    run('apiBeslis', b.dataset.id, b.dataset.beslis === 'ja').then(function(msg) {
+      kaart.remove();
+      laadActies(); laad();
+      if (b.dataset.beslis === 'ja') alert(msg.replace(/[*_`]/g, ''));
+    }).catch(laadActies);
   });
 
-  checkKoppeling();
-  renderHist();
+  /* ===== Lock-in: timer, weekraster, Life Chart ===== */
+  var T2 = { rest: 0, loopt: null };
+  function timerToon() {
+    var m = Math.floor(T2.rest / 60), s = T2.rest % 60;
+    var t = pad2(m) + ':' + pad2(s);
+    el('timerTijd').textContent = t;
+    document.title = T2.loopt ? t + ' — Donna OS' : 'Donna OS';
+  }
+  function timerStart(min) {
+    clearInterval(T2.loopt);
+    T2.rest = min * 60;
+    el('timerStop').style.display = 'inline-block';
+    el('timerSub').textContent = 'Diep werk — ' + min + ' min';
+    T2.loopt = setInterval(function() {
+      T2.rest--;
+      timerToon();
+      if (T2.rest <= 0) {
+        clearInterval(T2.loopt); T2.loopt = null;
+        el('timerStop').style.display = 'none';
+        el('timerSub').textContent = 'Blok af — sta op, beweeg, kies je volgende';
+        el('timerTijd').textContent = 'KLAAR';
+        document.title = 'Klaar — Donna OS';
+      }
+    }, 1000);
+    timerToon();
+  }
+  document.querySelectorAll('.t-knoppen [data-min]').forEach(function(b) {
+    b.addEventListener('click', function() { timerStart(Number(b.dataset.min)); });
+  });
+  el('timerStop').addEventListener('click', function() {
+    clearInterval(T2.loopt); T2.loopt = null;
+    el('timerStop').style.display = 'none';
+    el('timerTijd').textContent = '25:00';
+    el('timerSub').textContent = 'Gestopt — noteer eerlijk waarom, en opnieuw';
+    document.title = 'Donna OS';
+  });
+
+  function laadLockIn() {
+    run('apiPlannerStats').then(function(s) {
+      el('tijdStats').className = '';
+      el('tijdStats').innerHTML =
+        '<div class="pd-rij"><span style="font-family:var(--mono)">' + s.diepwerk + ' u</span> diep werk &amp; taakblokken</div>' +
+        '<div class="pd-rij"><span style="font-family:var(--mono)">' + s.afspraken + ' u</span> afspraken</div>' +
+        '<div class="pd-rij"><span style="font-family:var(--mono)">' + s.habits + ' u</span> habits</div>';
+    }).catch(function(){ el('tijdStats').textContent = 'Nog geen data — installeer Code_planner.gs.'; });
+    run('apiLockIn').then(function(d) {
+      var dagNamen = d.dagen.map(function(x) { return ['zo','ma','di','wo','do','vr','za'][new Date(x + 'T12:00:00').getDay()]; });
+      var vandaag = d.dagen[d.dagen.length - 1];
+      var html = '<tr><td></td>' + d.dagen.map(function(x, i) {
+        return '<th>' + dagNamen[i] + '</th>';
+      }).join('') + '</tr>';
+      html += d.habits.map(function(h) {
+        return '<tr><td>' + esc(h) + '</td>' + d.dagen.map(function(dag) {
+          var hit = d.log.some(function(L) { return L.habit === h && L.datum === dag && L.done; });
+          return '<td><span class="wd' + (hit ? ' ja' : '') + (dag === vandaag ? ' nu' : '') + '"></span></td>';
+        }).join('') + '</tr>';
+      }).join('');
+      el('weekRaster').innerHTML = html;
+      if (d.geboortedatum && /^\d{4}-\d{2}-\d{2}$/.test(d.geboortedatum)) {
+        el('lcGeb').value = d.geboortedatum;
+        tekenLifeChart(d.geboortedatum);
+      } else {
+        el('lcMeta').textContent = 'Vul je geboortedatum in en tik op Toon.';
+      }
+    });
+  }
+  function tekenLifeChart(geb) {
+    var datum = new Date(geb);
+    var maxJaar = new Date().getFullYear() - 10;
+    if (isNaN(datum) || datum.getFullYear() < 1900 || datum.getFullYear() > maxJaar) {
+      el('lcMeta').textContent = 'Die datum klopt niet — kies je echte geboortedatum.'; return false;
+    }
+    var c = el('lcCanvas'), ctx = c.getContext('2d');
+    var perRij = 52, jaren = 90, cel = 8;
+    c.width = perRij * cel; c.height = jaren * cel;
+    ctx.clearRect(0, 0, c.width, c.height);
+    var weken = Math.floor((Date.now() - datum.getTime()) / (7 * 86400000));
+    var totaal = perRij * jaren;
+    for (var i = 0; i < totaal; i++) {
+      var x = (i % perRij) * cel, y = Math.floor(i / perRij) * cel;
+      ctx.fillStyle = i < weken ? '#1A1916' : '#EAE6D9';
+      if (i === weken) ctx.fillStyle = '#C8401A';
+      ctx.fillRect(x + 1, y + 1, cel - 2, cel - 2);
+    }
+    var pct = Math.round(weken / totaal * 1000) / 10;
+    el('lcMeta').textContent = weken.toLocaleString('nl-NL') + ' geleefd · ' + (totaal - weken).toLocaleString('nl-NL') + ' te gaan tot 90 · ' + pct + '% — maak ze de moeite waard';
+    return true;
+  }
+  el('lcOpslaan').addEventListener('click', function() {
+    var v = el('lcGeb').value; if (!v) return;
+    if (tekenLifeChart(v)) run('apiZetProfielWaarde', 'geboortedatum', v);
+  });
+
+  /* ===== Systemen: terugkerende checklists (auto-reset) + spiekbrieven ===== */
+  var CYCLUS_LABEL = { dag: 'dagelijks', week: 'wekelijks', maand: 'maandelijks' };
+  function renderChecklists() {
+    var lijsten = S.checklists || [];
+    el('systemenLijsten').innerHTML = lijsten.length ? lijsten.map(function(c) {
+      var af = c.items.filter(function(x) { return x.done; }).length;
+      return '<div class="cl-kaart" id="cl-' + c.id + '"><div class="cl-kop" data-cl="' + c.id + '">' +
+        '<span class="cl-titel">' + esc(c.titel) + '</span>' +
+        '<span class="cl-stat' + (af === c.items.length ? ' af' : '') + '">' + af + '/' + c.items.length + ' · ' + CYCLUS_LABEL[c.cyclus] + '</span></div>' +
+        '<div class="cl-items">' + c.items.map(function(x) {
+          return '<div class="cl-item' + (x.done ? ' af' : '') + '" data-cllijst="' + c.id + '" data-clitem="' + esc(x.naam) + '"><span class="cl-box"></span>' + esc(x.naam) + '</div>';
+        }).join('') + '</div></div>';
+    }).join('') : '<div class="leeg">Kon checklists niet laden.</div>';
+  }
+  function laadChecklists() {
+    run('apiChecklists').then(function(L) { S.checklists = L; renderChecklists(); })
+      .catch(function() { el('systemenLijsten').innerHTML = '<div class="leeg">Nog geen data — plak de nieuwste Code_app_additions.gs.</div>'; });
+  }
+  el('systemenLijsten').addEventListener('click', function(ev) {
+    var it = ev.target.closest('.cl-item');
+    if (it) {
+      it.classList.toggle('af');
+      var c = (S.checklists || []).filter(function(x) { return x.id === it.dataset.cllijst; })[0];
+      if (c) {
+        c.items.forEach(function(x) { if (x.naam === it.dataset.clitem) x.done = !x.done; });
+        var af = c.items.filter(function(x) { return x.done; }).length;
+        var st = it.closest('.cl-kaart').querySelector('.cl-stat');
+        st.textContent = af + '/' + c.items.length + ' · ' + CYCLUS_LABEL[c.cyclus];
+        st.classList.toggle('af', af === c.items.length);
+      }
+      run('apiToggleChecklist', it.dataset.cllijst, it.dataset.clitem).catch(laadChecklists);
+      return;
+    }
+    var kop = ev.target.closest('.cl-kop');
+    if (kop) el('cl-' + kop.dataset.cl).classList.toggle('open');
+  });
+
+  var SPIEKBRIEVEN = [
+    { titel: 'Huishoudsystemen', secties: [
+      { kop: 'Keuken', regels: ['Basisvoorraad aanvullen', 'Schoonmaken terwijl je kookt', 'Kant-en-klare maaltijden in de vriezer', 'Koelkast checken vóór het boodschappen doen'] },
+      { kop: 'Was', regels: ['Kleding sorteren per categorie', 'Wassen vóórdat je schone kleren op zijn', 'Dezelfde dag opvouwen en opruimen (waar mogelijk)', 'Simpele dagelijkse outfits klaar hebben'] },
+      { kop: 'Documenten', regels: ['Eén vaste "Documenten"-map', 'Rekeningen en accounts organiseren', 'Belangrijke bonnetjes bewaren', 'Digitaliseren wat je nodig hebt'] },
+      { kop: 'Schoonmaak', regels: ['Schoonmaakspullen binnen handbereik', 'Een simpele schoonmaakroutine', 'Een basischecklist gebruiken', 'Snel opruimen vóórdat rommel chaos wordt'] },
+      { kop: 'Wat het leven makkelijker maakt', regels: ['Wasmand', 'Basis-schoonmaakspullen', 'Extra schoonmaakdoeken', 'Reserve-vuilniszakken', 'Opbergdozen', 'Voedselcontainers', 'Belangrijke reserve-items', 'Kant-en-klare vriezermaaltijden', 'Een lijst van wat bijna op is'] } ] },
+    { titel: 'Anti-burnout-technieken', secties: [
+      { kop: '2-minutenregel', regels: ['Kost het minder dan 2 minuten — doe het nu', 'Laat kleine taken niet opstapelen'] },
+      { kop: '5-secondenregel', regels: ['Tel af: 5-4-3-2-1 en kom in actie', 'Stop met wachten op motivatie'] },
+      { kop: '"Niet-doen"-lijst', regels: ['Benoem onnodige taken', 'Delegeer waar mogelijk', 'Bescherm je mentale energie'] },
+      { kop: 'Stop met multitasken', regels: ['Eén ding tegelijk', 'Minder mentale vermoeidheid, betere focus'] },
+      { kop: 'Pomodoro', regels: ['25 min focus, 5 min pauze, herhaal', 'Langere pauze na meerdere rondes'] },
+      { kop: '1-3-5-regel per dag', regels: ['1 grote taak', '3 middelgrote taken', '5 kleine taken'] },
+      { kop: 'Eat the frog', regels: ['Begin met de zwaarste taak', 'Bouw momentum voor de rest van de dag'] },
+      { kop: 'Grote taken opdelen', regels: ['Splits in kleinere stukken', 'Minder overweldiging, makkelijker beginnen'] } ] },
+    { titel: 'Stop met alles vergeten', secties: [
+      { kop: 'Niet onthouden — opschrijven', regels: ['Schrijf het meteen op', 'Gebruik reminders zonder schuldgevoel', 'Afspraken direct in je agenda', 'Eén vaste plek voor belangrijke informatie'] },
+      { kop: 'Wat enorm helpt', regels: ['Checklists, planners, alarmen', 'Een herhaalde routine', 'Belangrijke spullen op dezelfde plek', 'Taken uit je hoofd, op papier'] },
+      { kop: 'Wat je geheugen sloopt', regels: ['Te veel prikkels, slechte slaap', 'Te veel tegelijk willen doen', 'Stress en informatie-overload', 'Niet opschrijven'] },
+      { kop: 'Regels', regels: ['Je brein is geen opslagplaats', 'Organisatie verlaagt mentale belasting', 'Systemen verslaan motivatie', 'Minder beslissingen = minder mentale vermoeidheid'] } ] },
+    { titel: 'Boodschappen zonder fortuin', secties: [
+      { kop: 'Voor je gaat', regels: ['Check wat je al in huis hebt', 'Maak een lijst (en houd je eraan)', 'Bepaal een uitgavenlimiet', 'Vertrek niet hongerig', 'Denk in maaltijden, niet in losse producten', 'Plan maaltijden met overlappende ingrediënten'] },
+      { kop: 'In de winkel', regels: ['Begin bij de basisproducten', 'Vergelijk prijs per gewicht of inhoud', 'Vermijd het snackpad als je moe of gestrest bent', 'Koop niets puur omdat het in de aanbieding is', 'Kies simpel eten dat je echt eet', 'Veelzijdige ingrediënten eerst'] },
+      { kop: 'Makkelijke basics', regels: ['Rijst, bonen, eieren, pasta, havermout', 'Diepvriesgroente en diepvrieseiwit', 'Fruit, brood, yoghurt, kaas', 'Tomatensaus en basiskruiden'] },
+      { kop: 'Stille geldvreters', regels: ['Te vaak afhalen of bezorgen', 'Zonder lijst winkelen', 'Eten verspillen', 'Dure "fitness"-producten die je niet nodig hebt', 'Meerdere keren per week naar de winkel', 'Ingewikkelde ingrediënten die je nooit gebruikt'] } ] },
+    { titel: 'Weekorganisatie', secties: [
+      { kop: 'Organisatie die helpt', regels: ['Eén agenda voor alles', 'Taken opschrijven vóór je ze vergeet', 'Taken groeperen per categorie', 'Rusttijd inplannen', 'Vul niet elke dag helemaal', 'Houd een "niet urgent"-lijst bij'] },
+      { kop: 'Veelgemaakte fouten', regels: ['Denken dat je 40 dingen per dag kunt', 'Reistijd en vermoeidheid negeren', 'Alles doorschuiven naar je "toekomstige zelf"', 'Je agenda niet checken', 'Dezelfde dag overladen'] } ] }
+  ];
+  function renderSpiek() {
+    el('spiekbrieven').innerHTML = SPIEKBRIEVEN.map(function(s, i) {
+      return '<div class="spiek" id="spiek-' + i + '"><button class="spiek-kop" data-spiek="' + i + '"><span class="pijl">+</span>' + esc(s.titel) + '</button>' +
+        '<div class="spiek-body">' + s.secties.map(function(x) {
+          return '<div class="spiek-sub">' + esc(x.kop) + '</div>' + x.regels.map(function(r) { return '<div class="r">' + esc(r) + '</div>'; }).join('');
+        }).join('') + '</div></div>';
+    }).join('');
+  }
+  el('spiekbrieven').addEventListener('click', function(ev) {
+    var k = ev.target.closest('[data-spiek]');
+    if (!k) return;
+    var d = el('spiek-' + k.dataset.spiek);
+    d.classList.toggle('open');
+    k.querySelector('.pijl').textContent = d.classList.contains('open') ? '−' : '+';
+  });
+
+  /* ===== Navigatie ===== */
+  function wisselView(naam) {
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('actief'); });
+    el('view-' + naam).classList.add('actief');
+    document.querySelectorAll('nav button').forEach(function(b) {
+      b.classList.toggle('actief', b.dataset.view === naam || (naam === 'taken' && b.dataset.view === 'vandaag'));
+    });
+    document.body.className = document.body.className.replace(/\bv-\S+/g, '').trim();
+    document.body.classList.add('v-' + naam);
+    el('paginaTitel').textContent = TITELS[naam] || 'Donna OS';
+    if (naam === 'vandaag') laad();
+    if (naam === 'taken') laadTaken();
+    if (naam === 'doelen') laadDoelen();
+    if (naam === 'acties') laadActies();
+    if (naam === 'lockin') laadLockIn();
+  }
+  document.querySelectorAll('nav button').forEach(function(b) {
+    b.addEventListener('click', function() { wisselView(b.dataset.view); });
+  });
+
+  el('codeOpslaan').addEventListener('click', function() {
+    var v = el('codeInput').value.trim(); if (!v) return;
+    try { localStorage.setItem('dv_secret', v); } catch (e) {}
+    if (checkKoppeling()) laad();
+  });
+
+  renderSpiek();
+  herrenderChat();
+  if (checkKoppeling()) laad();
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function() {}); }
 </script>
 </body>
