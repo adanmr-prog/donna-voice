@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Donna">
+<meta name="theme-color" content="#FAF7F0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Donna Voice</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --ivoor: #FAF7F0; --vlak: #F1EDE2; --wit: #FFFEFB;
+    --inkt: #1A1916; --inkt2: #57544C; --gedempt: #9A947F;
+    --accent: #C8401A; --lijn: #E6E1D3;
+    --serif: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+  html, body { height: 100%; }
+  body { font-family: var(--sans); background: var(--ivoor); color: var(--inkt); line-height: 1.5; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top); }
+  header { padding: 18px 20px 12px; border-bottom: 1.5px solid var(--inkt); }
+  header .label { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--gedempt); text-transform: uppercase; }
+  header h1 { font-family: var(--serif); font-size: 30px; font-weight: 500; letter-spacing: -.01em; }
+  main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 20px 20px; }
+  .msg { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--lijn); }
+  .avatar { width: 27px; height: 27px; border-radius: 50%; border: 1.5px solid var(--inkt); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 14.5px; flex-shrink: 0; color: var(--inkt); }
+  .msg.donna .avatar { border-color: var(--accent); color: var(--accent); }
+  .msg .tekst { font-size: 15px; min-width: 0; word-wrap: break-word; white-space: pre-wrap; flex: 1; }
+  .msg.donna .tekst { font-family: var(--serif); font-size: 16px; }
+  .msg.ik .tekst, .msg.ik .avatar { color: var(--inkt2); border-color: var(--gedempt); }
+  .msg.stil { border: none; color: var(--gedempt); font-style: italic; font-size: 14.5px; }
+  .leeg { padding: 28px 0; color: var(--gedempt); font-size: 14.5px; font-family: var(--serif); font-style: italic; }
+  footer { border-top: 1.5px solid var(--inkt); background: var(--ivoor); padding: 18px 20px calc(22px + env(safe-area-inset-bottom)); text-align: center; }
+  .status { font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--gedempt); margin-bottom: 14px; min-height: 15px; }
+  .status.opname { color: var(--accent); }
+  .knop { width: 86px; height: 86px; border-radius: 50%; background: var(--inkt); color: var(--ivoor); border: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 14px rgba(26,25,22,.25); }
+  .knop svg { width: 32px; height: 32px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .knop.opname { background: var(--accent); animation: pols 1.2s ease-in-out infinite; }
+  .knop.bezig { opacity: .45; pointer-events: none; }
+  @keyframes pols { 0%,100% { box-shadow: 0 0 0 0 rgba(200,64,26,.35); } 50% { box-shadow: 0 0 0 18px rgba(200,64,26,0); } }
+  .voet { margin-top: 14px; }
+  .voet button { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; background: none; border: none; color: var(--gedempt); cursor: pointer; padding: 4px 8px; }
+  #koppel { display: none; padding: 26px 20px; }
+  #koppel.aan { display: block; }
+  #koppel .label { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--gedempt); text-transform: uppercase; margin-bottom: 8px; }
+  #koppel p { font-family: var(--serif); font-size: 16px; color: var(--inkt2); margin-bottom: 16px; }
+  #koppel input { width: 100%; border: 1.5px solid var(--inkt); background: var(--wit); padding: 12px 14px; font-family: var(--mono); font-size: 15px; outline: none; color: var(--inkt); }
+  #koppel button { margin-top: 12px; font-family: var(--mono); font-size: 12.5px; letter-spacing: .12em; border: 1.5px solid var(--inkt); background: var(--inkt); color: var(--ivoor); padding: 11px 22px; cursor: pointer; text-transform: uppercase; }
+  body.gekoppeld #koppel { display: none; }
+  body:not(.gekoppeld) main, body:not(.gekoppeld) footer { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="label" id="datum">&nbsp;</div>
+  <h1>Donna <span style="color:var(--accent)">Voice</span></h1>
+</header>
+
+<div id="koppel">
+  <div class="label">Eenmalig koppelen</div>
+  <p>Vul je koppelcode in. Die blijft op dit toestel bewaard.</p>
+  <input id="codeInput" placeholder="koppelcode" autocomplete="off" autocapitalize="none">
+  <button id="codeOpslaan">Koppel</button>
+</div>
+
+<main id="historie"></main>
+
+<footer>
+  <div class="status" id="status">Tik om op te nemen</div>
+  <button class="knop" id="recKnop" aria-label="Opnemen">
+    <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+  </button>
+  <div class="voet"><button id="wisKnop">Geschiedenis wissen</button></div>
+</footer>
+
+<script>
+  var API = 'https://script.google.com/macros/s/AKfycbxOYmM7FAgykrRm_5HmugVwm42VT7TZJksF5K6KD7gu68JTI9mqO__W4ctCgSaXbfRGiw/exec';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function md(s) { return esc(s).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/_([^_\n]+)_/g,'<i>$1</i>').replace(/`([^`\n]+)`/g,'<code>$1</code>'); }
+
+  var NL_DAG = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+  var NL_MAAND = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+  var nu = new Date();
+  el('datum').textContent = NL_DAG[nu.getDay()] + ' ' + nu.getDate() + ' ' + NL_MAAND[nu.getMonth()];
+
+  /* ===== Koppelcode ===== */
+  function secret() { try { return localStorage.getItem('dv_secret') || ''; } catch (e) { return ''; } }
+  function checkKoppeling() {
+    var aan = !!secret();
+    document.body.classList.toggle('gekoppeld', aan);
+    el('koppel').classList.toggle('aan', !aan);
+  }
+  el('codeOpslaan').addEventListener('click', function() {
+    var v = el('codeInput').value.trim();
+    if (!v) return;
+    try { localStorage.setItem('dv_secret', v); } catch (e) {}
+    checkKoppeling();
+  });
+
+  /* ===== Historie (lokaal) ===== */
+  function leesHist() { try { return JSON.parse(localStorage.getItem('dv_hist') || '[]'); } catch (e) { return []; } }
+  function schrijfHist(h) { try { localStorage.setItem('dv_hist', JSON.stringify(h.slice(-100))); } catch (e) {} }
+  function renderHist() {
+    var h = leesHist(), m = el('historie');
+    m.innerHTML = h.length ? h.map(function(x) {
+      return '<div class="msg ' + (x.wie === 'donna' ? 'donna' : 'ik') + '">' +
+        '<div class="avatar">' + (x.wie === 'donna' ? 'D' : 'M') + '</div>' +
+        '<div class="tekst">' + md(x.tekst) + '</div></div>';
+    }).join('') : '<div class="leeg">Spreek — ik orden het.</div>';
+    m.scrollTop = m.scrollHeight;
+  }
+  function voegToe(wie, tekst) {
+    var h = leesHist();
+    h.push({ wie: wie, tekst: tekst, t: Date.now() });
+    schrijfHist(h);
+    renderHist();
+  }
+  el('wisKnop').addEventListener('click', function() {
+    schrijfHist([]);
+    renderHist();
+  });
+
+  /* ===== Opname ===== */
+  var R = { rec: null, chunks: [], bezig: false, t0: 0, klok: null };
+  function status(t, opname) {
+    el('status').textContent = t;
+    el('status').classList.toggle('opname', !!opname);
+  }
+  function kiesMime() {
+    var opts = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+    for (var i = 0; i < opts.length; i++) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(opts[i])) return opts[i];
+    }
+    return '';
+  }
+  function tijd() {
+    var s = Math.round((Date.now() - R.t0) / 1000);
+    var m = Math.floor(s / 60); s = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function startOpname() {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      var mime = kiesMime();
+      R.rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      R.chunks = [];
+      R.rec.ondataavailable = function(ev) { if (ev.data && ev.data.size) R.chunks.push(ev.data); };
+      R.rec.onstop = function() {
+        stream.getTracks().forEach(function(tr) { tr.stop(); });
+        verstuur(new Blob(R.chunks, { type: R.rec.mimeType || 'audio/mp4' }));
+      };
+      R.rec.start();
+      R.t0 = Date.now();
+      el('recKnop').classList.add('opname');
+      status('Opname — ' + tijd() + ' — tik om te stoppen', true);
+      R.klok = setInterval(function() { status('Opname — ' + tijd() + ' — tik om te stoppen', true); }, 1000);
+    }).catch(function() {
+      status('Geen microfoontoegang — sta die toe bij instellingen');
+    });
+  }
+  function stopOpname() {
+    clearInterval(R.klok);
+    el('recKnop').classList.remove('opname');
+    el('recKnop').classList.add('bezig');
+    status('Donna luistert');
+    try { R.rec.stop(); } catch (e) { klaar(); }
+  }
+  function klaar() {
+    el('recKnop').classList.remove('bezig');
+    status('Tik om op te nemen');
+  }
+  function verstuur(blob) {
+    if (!blob || blob.size < 1000) { voegToe('stil', ''); klaar(); status('Te kort — probeer opnieuw'); return; }
+    var fr = new FileReader();
+    fr.onloadend = function() {
+      var b64 = String(fr.result).split(',')[1] || '';
+      fetch(API + '?voice=' + encodeURIComponent(secret()), { method: 'POST', body: JSON.stringify({ b64: b64, mime: blob.type || 'audio/mp4' }) })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d && d.ok) {
+            voegToe('ik', d.tekst || '(opname)');
+            voegToe('donna', d.antwoord || 'Oké.');
+            status('Tik om op te nemen');
+          } else {
+            status((d && d.fout === 'secret') ? 'Koppelcode klopt niet' : ((d && d.fout) || 'Niets verstaan — probeer opnieuw'));
+            if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(); }
+          }
+          klaar2();
+        })
+        .catch(function() { status('Geen verbinding — bericht niet verstuurd'); klaar2(); });
+    };
+    fr.readAsDataURL(blob);
+  }
+  function klaar2() { el('recKnop').classList.remove('bezig'); }
+  el('recKnop').addEventListener('click', function() {
+    if (el('recKnop').classList.contains('opname')) stopOpname();
+    else startOpname();
+  });
+
+  checkKoppeling();
+  renderHist();
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function() {}); }
+</script>
+</body>
+</html>
