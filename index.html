@@ -210,6 +210,9 @@
   #koppel p { font-family: var(--serif); font-size: 16.5px; color: var(--inkt2); margin-bottom: 16px; }
   #koppel input { width: 100%; border: 1.5px solid var(--inkt); background: var(--wit); padding: 12px 14px; font-family: var(--mono); font-size: 15px; outline: none; color: var(--inkt); }
   #koppel button { margin-top: 12px; font-family: var(--mono); font-size: 12.5px; letter-spacing: .12em; border: 1.5px solid var(--inkt); background: var(--inkt); color: var(--ivoor); padding: 11px 22px; cursor: pointer; text-transform: uppercase; }
+
+  #toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(16px); background: var(--inkt); color: var(--ivoor); font-family: var(--mono); font-size: 12.5px; letter-spacing: .03em; line-height: 1.4; padding: 10px 16px; max-width: 86%; text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease; z-index: 200; }
+  #toast.aan { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body class="v-vandaag">
@@ -330,6 +333,8 @@
   <button id="codeOpslaan">Koppel</button>
 </div>
 
+<div id="toast"></div>
+
 <button class="mic" id="micKnop" aria-label="Spreek tegen Donna">
   <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
 </button>
@@ -356,14 +361,25 @@
     return [{ rol: 'bot', tekst: 'Ik luister. Dump alles — ik orden het.' }];
   }
   function saveChat() { try { localStorage.setItem('dos_chat', JSON.stringify(S.chats.donna.slice(-100))); } catch (e) {} }
+  var _toastTimer;
+  function toast(msg) {
+    var t = el('toast'); if (!t) return;
+    t.textContent = msg; t.classList.add('aan');
+    clearTimeout(_toastTimer); _toastTimer = setTimeout(function() { t.classList.remove('aan'); }, 3400);
+  }
   function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
     return fetch(API + '?app=' + encodeURIComponent(secret()), { method: 'POST', body: JSON.stringify({ fn: fn, args: args }) })
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d && d.ok) return d.result;
-        if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(); }
+        if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(); throw new Error('secret'); }
         throw new Error((d && d.fout) || 'serverfout');
+      })
+      .catch(function(err) {
+        // v3.7: niet meer stil terugklappen — laat zien dat er iets misging (behalve bij koppel-prompt).
+        if (!err || err.message !== 'secret') toast('Niet gelukt — ' + ((err && err.message) || 'probeer opnieuw'));
+        throw err;
       });
   }
   function el(id) { return document.getElementById(id); }
