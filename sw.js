@@ -21,17 +21,26 @@ function uitCache(req) {
   return caches.match(req).then(function (hit) { return hit || caches.match('./index.html'); });
 }
 
+// Een response die via een redirect binnenkwam mag niet aan een navigatie worden geserveerd (Safari en Chrome weigeren die)
+// en hoort ook niet zo in de cache. Herverpakken maakt er een gewone response van.
+function zonderRedirect(resp) {
+  if (!resp.redirected) return Promise.resolve(resp);
+  return resp.blob().then(function (b) { return new Response(b, { status: resp.status, statusText: resp.statusText, headers: resp.headers }); });
+}
+
 // v4.4: network-first voor HTML. Voorheen cache-first met een vaste cache-naam, waardoor een geïnstalleerde PWA
 // nooit een nieuwe index.html kreeg zolang sw.js zelf niet wijzigde (v3.7 en v4.2 bereikten gebruikers niet).
-function netwerkEerst(req) {
+function netwerkEerst(e) {
+  var req = e.request;
   var vanNet = fetch(req.url, { cache: 'no-cache' }).then(function (resp) {
-    if (resp && resp.ok) {
-      var kopie = resp.clone();
-      caches.open(CACHE).then(function (c) { c.put(req, kopie); });
-      return resp;
-    }
-    return uitCache(req).then(function (hit) { return hit || resp; });  // serverfout: liever de oude shell dan een foutpagina
+    if (!(resp && resp.ok)) return uitCache(req).then(function (hit) { return hit || resp; });  // serverfout: liever de oude shell dan een foutpagina
+    return zonderRedirect(resp).then(function (schoon) {
+      var kopie = schoon.clone();
+      e.waitUntil(caches.open(CACHE).then(function (c) { return c.put(req, kopie); }));  // waitUntil: iOS mag de SW anders stoppen vóór de put klaar is
+      return schoon;
+    });
   });
+  vanNet.catch(function () {});  // als de timeout al gewonnen heeft en het netwerk daarna faalt, is dat geen onafgehandelde fout
   var naTimeout = new Promise(function (klaar) { setTimeout(klaar, NET_TIMEOUT_MS); })
     .then(function () { return uitCache(req); })
     .then(function (hit) { return hit || vanNet; });  // niets in cache: dan toch op het netwerk wachten
@@ -41,7 +50,7 @@ function netwerkEerst(req) {
 self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;  // API (POST, ander domein) nooit cachen
-  if (isHtml(e.request, url)) { e.respondWith(netwerkEerst(e.request)); return; }
+  if (isHtml(e.request, url)) { e.respondWith(netwerkEerst(e)); return; }
   e.respondWith(  // statische assets: cache-first
     caches.match(e.request).then(function (hit) {
       return hit || fetch(e.request).then(function (resp) {
