@@ -1,5 +1,5 @@
 /* Donna OS — service worker: app-shell cache, API altijd via netwerk */
-var CACHE = 'donna-os-v1';
+var CACHE = 'donna-os-v4.3';  // v4.3: bump zodat geïnstalleerde PWAs de nieuwe index.html ophalen
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
