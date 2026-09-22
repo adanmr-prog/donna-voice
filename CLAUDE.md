@@ -7,6 +7,7 @@ Persoonlijke "extern brein"-PWA: gesprek met Donna, spraakopname, taken, doelen,
 - `sw.js`: service worker met app-shell cache. De cache-naam `CACHE` moet bij elke release omhoog.
 - `manifest.webmanifest` en de icon-PNG's: PWA-metadata.
 - Backend: Google Apps Script web-app, niet in deze repo. Het contract staat in de skill `donna-backend-api`.
+- `athena/`: Athena Assistent, een tweede PWA voor AthenaSchool (operations-dashboard, bedrijfsbrein met vraag-en-antwoord, nachtelijke review, huisstijl-kit, geschiedenis van schoolopdrachten). Zelfde opzet: `athena/index.html` (één bestand), eigen `athena/sw.js` (cache-naam `athena-assistent-vX.Y`), `athena/manifest.webmanifest`, iconen. De backend staat wél in de repo: `athena/backend/Code.gs` (Apps Script, te plakken in een eigen project) met installatie in `athena/backend/README.md`; het contract staat in de skill `athena-backend-api`. Huisstijl: Nunito, paars `#66306E`, oranje `#FAA11B`.
 
 ## Conventies
 - Vanilla JS in ES5-stijl: `var`, `function`, geen arrow functions, `let/const`, template strings, classes of modules. Doel: iOS Safari als standalone PWA.
@@ -18,8 +19,8 @@ Persoonlijke "extern brein"-PWA: gesprek met Donna, spraakopname, taken, doelen,
 - `localStorage` altijd in try/catch (privémodus gooit).
 
 ## Releasen
-- Gebruik `/release`. Kern: `CACHE` in `sw.js` bumpen, versiecommentaar, commit-titel `vX.Y: omschrijving`.
-- De hook `.claude/hooks/check-index.sh` draait na elke edit van `index.html`: syntaxcheck van het inline script en controle of `sw.js` mee gewijzigd is. Een melding van die hook is geen ruis; los hem op.
+- Gebruik `/release`. Kern: `CACHE` in `sw.js` bumpen, versiecommentaar, commit-titel `vX.Y: omschrijving`. Voor de Athena-app geldt hetzelfde met `athena/sw.js`; de twee apps hebben een eigen versiereeks (Donna `v4.x`, Athena `athena v1.x`).
+- De hook `.claude/hooks/check-index.sh` draait na elke edit van een `index.html` (root of `athena/`): syntaxcheck van het inline script en controle of de `sw.js` in dezelfde map mee gewijzigd is. Een melding van die hook is geen ruis; los hem op.
 
 ## Testen
 - Geen testsuite. Verifieer gedrag in de browser via de chrome-devtools MCP-server (`.mcp.json`) en de skill `agent-skills:browser-testing-with-devtools`.
