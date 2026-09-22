@@ -223,7 +223,7 @@ function apiActieToevoegen(tekst, prio, deadline) {
   var a = metLock(function () { return schrijf('Acties', { tekst: tekst, bron: 'handmatig', prio: PRIOS.indexOf(prio) >= 0 ? prio : 'midden', deadline: deadline || '', status: 'open', aangemaakt: nu() }); });
   return actieUit(a);
 }
-function actieUit(a) { return { id: a.id, tekst: a.tekst, bron: a.bron, prio: a.prio, deadline: a.deadline, link: a.link || '', over: a.deadline ? -dagenTot(a.deadline) : null }; }
+function actieUit(a) { var tot = a.deadline ? dagenTot(a.deadline) : null; return { id: a.id, tekst: a.tekst, bron: a.bron, prio: a.prio, deadline: a.deadline, link: a.link || '', over: tot === null ? null : -tot || 0 }; }
 function kansUit(k) { return { id: k.id, school: k.school, traject: k.traject, fase: k.fase, waarde: Number(k.waarde) || 0, volgendeActie: k.volgendeActie, deadline: k.deadline, dagenStil: k.laatsteContact ? dagenSinds(k.laatsteContact) : null }; }
 function kansOpen(k) { return ['gewonnen', 'verloren'].indexOf(k.fase) < 0; }
 function sorteerActies(a, b) {
@@ -248,7 +248,7 @@ function zoekMailsOnbeantwoord(max, minDagen) {
       if (van.toLowerCase().indexOf(mij) >= 0) return;
       var dagen = Math.floor((Date.now() - laatste.getDate().getTime()) / 86400000);
       if (dagen < minDagen) return;
-      uit.push({ onderwerp: t.getFirstMessageSubject() || '(geen onderwerp)', van: naamUitAdres(van), dagen: dagen, link: 'https://mail.google.com/mail/u/0/#all/' + t.getId() });
+      uit.push({ onderwerp: t.getFirstMessageSubject() || '(geen onderwerp)', van: naamUitAdres(van), dagen: dagen, link: 'https://mail.google.com/mail/?authuser=' + encodeURIComponent(mij) + '#all/' + t.getId() });  // authuser: het juiste account, ook in de in-app browser
     });
     return uit;
   } catch (e) { return []; }

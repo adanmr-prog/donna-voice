@@ -1,7 +1,7 @@
 /* Athena Assistent — service worker (kopie van de Donna-aanpak): HTML network-first (cache als fallback), statische shell cache-first, API altijd via netwerk */
 var CACHE = 'athena-assistent-v1.0';  // bump bij elke release van athena/index.html (zie /release)
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
-var NET_TIMEOUT_MS = 3000;  // v4.4: bij trage verbinding na 3 s de gecachte shell tonen; het netwerk werkt op de achtergrond door
+var NET_TIMEOUT_MS = 3000;  // athena v1.0 (Donna v4.4): bij trage verbinding na 3 s de gecachte shell tonen; het netwerk werkt op de achtergrond door
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
@@ -9,7 +9,8 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+    // athena v1.0: alleen oude Athena-caches opruimen. Donna OS (root) deelt dezelfde origin en dus dezelfde CacheStorage.
+    return Promise.all(keys.filter(function (k) { return k.indexOf('athena-assistent-') === 0 && k !== CACHE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
@@ -28,8 +29,7 @@ function zonderRedirect(resp) {
   return resp.blob().then(function (b) { return new Response(b, { status: resp.status, statusText: resp.statusText, headers: resp.headers }); });
 }
 
-// v4.4: network-first voor HTML. Voorheen cache-first met een vaste cache-naam, waardoor een geïnstalleerde PWA
-// nooit een nieuwe index.html kreeg zolang sw.js zelf niet wijzigde (v3.7 en v4.2 bereikten gebruikers niet).
+// athena v1.0: network-first voor HTML, overgenomen van Donna v4.4 (cache-first liet geïnstalleerde PWA's zonder nieuwe index.html).
 function netwerkEerst(e) {
   var req = e.request;
   var vanNet = fetch(req.url, { cache: 'no-cache' }).then(function (resp) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" media="print" onload="this.media='all'"><!-- athena v1.0: niet render-blokkerend; bij trage verbinding eerst systeemfont -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -213,7 +213,7 @@
     <div class="invoer" style="margin-top:0"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="docZoek" placeholder="Zoek op titel of school" autocomplete="off"></div>
     <div class="chips" id="docChips"></div>
     <div id="docLijst"><div class="leeg">—</div></div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap"><button class="knop licht klein" id="indexeerKnop">Documenten inlezen</button><a id="mapLink" href="#" style="font-size:13px">Open de Drive-map</a></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap"><button class="knop licht klein" id="indexeerKnop">Documenten inlezen</button><a id="mapLink" href="#" style="font-size:13px;display:none">Open de Drive-map</a></div>
     <div class="hint" id="indexInfo"></div>
   </div>
 
@@ -367,16 +367,16 @@
   }
 
   /* ===== 1. Vandaag ===== */
-  function tegel(cijfer, label, extra) { return '<div class="tegel' + (extra ? ' ' + extra : '') + '"><div class="t-cijfer">' + cijfer + '</div><div class="t-label">' + esc(label) + '</div></div>'; }
+  function tegel(cijfer, label, extra) { return '<div class="tegel' + (extra ? ' ' + extra : '') + '"><div class="t-cijfer">' + esc(cijfer) + '</div><div class="t-label">' + esc(label) + '</div></div>'; }
   function deadlineTekst(a) {
     if (!a.deadline) return '';
-    if (a.over === null || a.over === undefined) return kortDatum(a.deadline);
+    if (a.over === null || a.over === undefined) return esc(kortDatum(a.deadline));
     if (a.over > 0) return '<b>' + a.over + (a.over === 1 ? ' dag' : ' dagen') + ' te laat</b>';
     if (a.over === 0) return '<b>vandaag</b>';
     return 'over ' + (-a.over) + (a.over === -1 ? ' dag' : ' dagen');
   }
   function actieRij(a) {
-    var meta = [BRON_LABEL[a.bron] || a.bron, deadlineTekst(a)].filter(Boolean).join(' · ');
+    var meta = [esc(BRON_LABEL[a.bron] || a.bron), deadlineTekst(a)].filter(Boolean).join(' · ');
     return '<div class="rij" data-aid="' + esc(a.id) + '"><button class="vink" data-klaar="' + esc(a.id) + '" aria-label="Afvinken"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></button>' +
       '<div class="r-body"><div class="r-titel">' + esc(a.tekst) + '</div>' + (meta ? '<div class="r-meta">' + meta + '</div>' : '') + '</div>' +
       (a.prio ? '<span class="tag ' + esc(a.prio) + '">' + esc(a.prio) + '</span>' : '') + '</div>';
@@ -395,7 +395,7 @@
     el('pijplijn').textContent = d.kpi.pijplijn ? euro(d.kpi.pijplijn) + ' in de pijplijn' : '';
     el('kansenLijst').innerHTML = d.kansen.length ? d.kansen.map(function (k) {
       var stil = (k.dagenStil !== null && k.dagenStil !== undefined) ? (k.dagenStil > 7 ? '<b>' + k.dagenStil + ' dagen stil</b>' : k.dagenStil + ' d geleden contact') : '';
-      return '<div class="rij"><div class="r-body"><div class="r-titel">' + esc(k.school) + ' <span class="zacht">· ' + esc(k.traject) + '</span></div><div class="r-meta">' + [k.volgendeActie ? esc(k.volgendeActie) : '', k.deadline ? 'uiterlijk ' + kortDatum(k.deadline) : '', stil].filter(Boolean).join(' · ') + '</div></div>' +
+      return '<div class="rij"><div class="r-body"><div class="r-titel">' + esc(k.school) + ' <span class="zacht">· ' + esc(k.traject) + '</span></div><div class="r-meta">' + [k.volgendeActie ? esc(k.volgendeActie) : '', k.deadline ? 'uiterlijk ' + esc(kortDatum(k.deadline)) : '', stil].filter(Boolean).join(' · ') + '</div></div>' +
         '<div class="r-rechts"><span class="tag ' + esc(k.fase) + '">' + esc(k.fase) + '</span>' + (k.waarde ? '<div class="r-bedrag">' + euro(k.waarde) + '</div>' : '') + '</div></div>';
     }).join('') : '<div class="leeg">Geen open kansen.</div>';
     el('agendaLijst').innerHTML = d.agenda.length ? d.agenda.map(function (a) {
@@ -478,7 +478,7 @@
   /* ===== 3. Nachtelijke review ===== */
   function reviewLijst(items, leeg) {
     return items.length ? items.map(function (x) {
-      var binnen = '<div class="r-body"><div class="r-titel" style="font-weight:600">' + esc(x.tekst) + '</div>' + (x.bron || x.dagen ? '<div class="r-meta">' + [BRON_LABEL[x.bron] || x.bron, x.dagen ? '<b>' + x.dagen + ' dagen</b>' : ''].filter(Boolean).join(' · ') + '</div>' : '') + '</div>';
+      var binnen = '<div class="r-body"><div class="r-titel" style="font-weight:600">' + esc(x.tekst) + '</div>' + (x.bron || x.dagen ? '<div class="r-meta">' + [esc(BRON_LABEL[x.bron] || x.bron), x.dagen ? '<b>' + esc(x.dagen) + ' dagen</b>' : ''].filter(Boolean).join(' · ') + '</div>' : '') + '</div>';
       return x.link ? '<a class="rij klik" href="' + esc(x.link) + '">' + binnen + LINK_SVG + '</a>' : '<div class="rij">' + binnen + '</div>';
     }).join('') : '<div class="leeg">' + leeg + '</div>';
   }
@@ -505,7 +505,7 @@
     run('apiReviewNu').then(function () { k.disabled = false; k.textContent = 'Review nu uitvoeren'; laadReview(); })
       .catch(function () { k.disabled = false; k.textContent = 'Review nu uitvoeren'; });
   });
-  document.addEventListener('click', function (ev) { var r = ev.target.closest('[data-recent]'); if (r) r.classList.toggle('open'); });
+  document.addEventListener('click', function (ev) { if (ev.target.closest('[data-kopieer]')) return; var r = ev.target.closest('[data-recent]'); if (r) r.classList.toggle('open'); });  // Kopieer-knop mag de rij niet dichtklappen
 
   /* ===== 4. Huisstijl ===== */
   function pasKleurenToe(v) {
@@ -526,7 +526,7 @@
     el('toonLijst').innerHTML = h.toon.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
     el('zinnenLijst').innerHTML = h.zinnen.map(function (z) { return '<div class="rij"><div class="r-body"><div class="r-titel">' + esc(z.titel) + '</div><div class="r-meta" style="color:var(--inkt2);font-size:13.5px">' + esc(z.tekst) + '</div></div></div>'; }).join('');
     el('recentContent').innerHTML = h.recent.length ? h.recent.map(function (c) {
-      return '<div class="rij recent klik" data-recent="1" data-cid="' + esc(c.id) + '"><div class="r-body"><div class="r-titel">' + esc(c.onderwerp) + ' <span class="zacht">· ' + esc(c.typeNaam) + '</span></div><div class="r-meta">' + kortDatum(c.datum) + '</div><div class="r-tekst">' + esc(c.tekst) + '</div><button class="knop licht klein" data-kopieer="' + esc(c.id) + '" style="margin-top:8px;display:none">Kopieer</button></div></div>';
+      return '<div class="rij recent klik" data-recent="1" data-cid="' + esc(c.id) + '"><div class="r-body"><div class="r-titel">' + esc(c.onderwerp) + ' <span class="zacht">· ' + esc(c.typeNaam) + '</span></div><div class="r-meta">' + esc(kortDatum(c.datum)) + '</div><div class="r-tekst">' + esc(c.tekst) + '</div><button class="knop licht klein" data-kopieer="' + esc(c.id) + '" style="margin-top:8px;display:none">Kopieer</button></div></div>';
     }).join('') : '<div class="leeg">Nog niets gemaakt.</div>';
     el('hPrimair').value = h.velden.kleur_primair; el('hAccent').value = h.velden.kleur_accent;
     el('hOmschrijving').value = h.velden.omschrijving; el('hToon').value = h.velden.toon; el('hZinnen').value = h.velden.zinnen;
@@ -594,7 +594,7 @@
     var t = d.traject, s = d.school;
     var rij = function (k, v) { return v ? '<div class="k-rij"><span>' + k + '</span><span>' + v + '</span></div>' : ''; };
     return rij('Contactpersoon', esc(t.contactpersoon || (s && s.contactpersoon)) + (s && s.email ? ' · <a href="mailto:' + esc(s.email) + '">' + esc(s.email) + '</a>' : '')) + rij('Accountmanager', esc(t.am)) +
-      rij('Inzet', [t.ondersteuners ? t.ondersteuners + ' ondersteuner' + (Number(t.ondersteuners) === 1 ? '' : 's') : '', t.urenPerWeek ? t.urenPerWeek + ' u/wk' : '', t.tarief ? '€ ' + t.tarief + '/u' : ''].filter(Boolean).join(' · ')) +
+      rij('Inzet', [t.ondersteuners ? esc(t.ondersteuners) + ' ondersteuner' + (Number(t.ondersteuners) === 1 ? '' : 's') : '', t.urenPerWeek ? esc(t.urenPerWeek) + ' u/wk' : '', t.tarief ? '€ ' + esc(t.tarief) + '/u' : ''].filter(Boolean).join(' · ')) +
       rij('Omzet', t.omzet ? euro(t.omzet) : '') + rij('Samenvatting', esc(t.samenvatting)) +
       '<div class="k-rij"><span>Status</span><select data-statuswijzig="' + esc(t.id) + '" style="border:1.5px solid var(--lijn);border-radius:8px;padding:4px 8px;background:var(--wit)">' + ['offerte', 'actief', 'afgerond', 'gestopt'].map(function (st) { return '<option' + (st === t.status ? ' selected' : '') + '>' + st + '</option>'; }).join('') + '</select></div>' +
       '<div class="kop" style="margin-top:14px">Documenten</div>' + (d.documenten.length ? d.documenten.map(function (x) { return '<a class="rij doc" href="' + esc(x.url) + '" style="padding:8px 0"><span class="d-type ' + esc(x.type) + '">' + (TYPE_KORT[x.type] || 'DOC') + '</span><div class="r-body"><div class="r-titel" style="font-size:14.5px">' + esc(x.titel) + '</div></div>' + LINK_SVG + '</a>'; }).join('') : '<div class="leeg">Geen documenten aan deze school gekoppeld.</div>') +
