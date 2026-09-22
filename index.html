@@ -477,7 +477,7 @@
       var ex = el('stap-' + tid);
       if (ex) { ex.remove(); kaart.classList.remove('lift'); return; }
       kaart.classList.add('lift');
-      kaart.insertAdjacentHTML('afterend', '<div class="stappen" id="stap-' + tid + '"><div class="spinner">Donna maakt je stappenplan</div></div>');
+      kaart.insertAdjacentHTML('afterend', '<div class="stappen" id="stap-' + esc(tid) + '"><div class="spinner">Donna maakt je stappenplan</div></div>');  // v4.3: tid komt gedecodeerd uit dataset, dus opnieuw escapen
       run('apiStappenplan', tid).then(function(r) {
         var dv = el('stap-' + tid); if (!dv) return;
         dv.innerHTML = r.ok ? md(r.plan) : '<div class="leeg">Kon geen plan maken — tik nog eens.</div>';
@@ -874,11 +874,11 @@
     var lijsten = S.checklists || [];
     el('systemenLijsten').innerHTML = lijsten.length ? lijsten.map(function(c) {
       var af = c.items.filter(function(x) { return x.done; }).length;
-      return '<div class="cl-kaart" id="cl-' + c.id + '"><div class="cl-kop" data-cl="' + c.id + '">' +
+      return '<div class="cl-kaart" id="cl-' + esc(c.id) + '"><div class="cl-kop" data-cl="' + esc(c.id) + '">' +  // v4.3: ids escapen, net als esc(t.id) bij taken
         '<span class="cl-titel">' + esc(c.titel) + '</span>' +
         '<span class="cl-stat' + (af === c.items.length ? ' af' : '') + '">' + af + '/' + c.items.length + ' · ' + CYCLUS_LABEL[c.cyclus] + '</span></div>' +
         '<div class="cl-items">' + c.items.map(function(x) {
-          return '<div class="cl-item' + (x.done ? ' af' : '') + '" data-cllijst="' + c.id + '" data-clitem="' + esc(x.naam) + '"><span class="cl-box"></span>' + esc(x.naam) + '</div>';
+          return '<div class="cl-item' + (x.done ? ' af' : '') + '" data-cllijst="' + esc(c.id) + '" data-clitem="' + esc(x.naam) + '"><span class="cl-box"></span>' + esc(x.naam) + '</div>';
         }).join('') + '</div></div>';
     }).join('') : '<div class="leeg">Kon checklists niet laden.</div>';
   }

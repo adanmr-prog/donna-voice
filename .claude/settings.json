@@ -23,5 +23,18 @@
         "repo": "anthropics/claude-plugins-official"
       }
     }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-index.sh\""
+          }
+        ]
+      }
+    ]
   }
 }
