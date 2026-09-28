@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<!-- v4.5: niet render-blokkerend; bij "verbonden maar geen internet" bleef het scherm anders leeg tot de fontrequest afliep -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" media="print" onload="this.media='all'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -329,8 +330,9 @@
 <div id="koppel">
   <div class="k-label">Eenmalig koppelen</div>
   <p>Vul je koppelcode in. Die blijft op dit toestel bewaard.</p>
-  <input id="codeInput" placeholder="koppelcode" autocomplete="off" autocapitalize="none">
+  <input id="codeInput" placeholder="koppelcode" autocomplete="off" autocapitalize="none" enterkeyhint="done">
   <button id="codeOpslaan">Koppel</button>
+  <div class="hint" id="koppelFout" style="color:var(--accent);margin-top:14px"></div>
 </div>
 
 <div id="toast"></div>
@@ -351,9 +353,11 @@
   var API = 'https://script.google.com/macros/s/AKfycbxOYmM7FAgykrRm_5HmugVwm42VT7TZJksF5K6KD7gu68JTI9mqO__W4ctCgSaXbfRGiw/exec';
   var S = { data: null, alle: null, bezig: false, chats: { donna: leesChat() } };
   function secret() { try { return localStorage.getItem('dv_secret') || ''; } catch (e) { return ''; } }
-  function checkKoppeling() {
+  function checkKoppeling(geweigerd) {
     var aan = !!secret();
     el('koppel').classList.toggle('aan', !aan);
+    // v4.5: een foute koppelcode toonde stil opnieuw het koppelscherm; zeg wat er aan de hand is
+    el('koppelFout').textContent = geweigerd ? 'De backend accepteerde deze koppelcode niet. Controleer de code en probeer opnieuw.' : '';
     return aan;
   }
   function leesChat() {
@@ -367,20 +371,37 @@
     t.textContent = msg; t.classList.add('aan');
     clearTimeout(_toastTimer); _toastTimer = setTimeout(function() { t.classList.remove('aan'); }, 3400);
   }
+  var RUN_TIMEOUT_MS = 60000;  // v4.5: een hangend request blokkeerde chat en mic voorgoed (S.bezig / .bezig werden nooit gereset)
   function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
-    return fetch(API + '?app=1', { method: 'POST', body: JSON.stringify({ fn: fn, args: args, secret: secret() }) })   // v4.2: secret in de body, niet in de URL
-      .then(function(r) { return r.json(); })
+    var ctrl = window.AbortController ? new AbortController() : null, klok = null;
+    var opties = { method: 'POST', body: JSON.stringify({ fn: fn, args: args, secret: secret() }) };   // v4.2: secret in de body, niet in de URL
+    if (ctrl) { opties.signal = ctrl.signal; klok = setTimeout(function() { ctrl.abort(); }, RUN_TIMEOUT_MS); }
+    return fetch(API + '?app=1', opties)
+      .then(function(r) {
+        // v4.5: Apps Script geeft bij een verkeerde deployment of autorisatie een HTML-pagina terug; r.json() gaf dan
+        // "Unexpected token <", wat niemand iets zegt. Lees als tekst en leg uit wat er mis is.
+        return r.text().then(function(tekst) {
+          var d = null;
+          try { d = JSON.parse(tekst); } catch (e) {}
+          if (d) return d;
+          if (!r.ok) throw new Error('backend gaf HTTP ' + r.status);
+          throw new Error(/<html/i.test(tekst) ? 'backend gaf een webpagina i.p.v. data — controleer de Apps Script-deployment (toegang: iedereen)' : 'onleesbaar antwoord van de backend');
+        });
+      })
       .then(function(d) {
         if (d && d.ok) return d.result;
-        if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(); throw new Error('secret'); }
+        if (d && d.fout === 'secret') { try { localStorage.removeItem('dv_secret'); } catch (e) {} checkKoppeling(true); throw new Error('secret'); }
         throw new Error((d && d.fout) || 'serverfout');
       })
       .catch(function(err) {
         // v3.7: niet meer stil terugklappen — laat zien dat er iets misging (behalve bij koppel-prompt).
+        if (err && err.name === 'AbortError') err = new Error('geen antwoord binnen ' + Math.round(RUN_TIMEOUT_MS / 1000) + ' s');
+        else if (err && err.name === 'TypeError') err = new Error('geen verbinding met de backend (offline, of het adres is geblokkeerd)');  // v4.5: "Load failed" / "Failed to fetch" zei niets
         if (!err || err.message !== 'secret') toast('Niet gelukt — ' + ((err && err.message) || 'probeer opnieuw'));
         throw err;
-      });
+      })
+      .then(function(v) { clearTimeout(klok); return v; }, function(err) { clearTimeout(klok); throw err; });
   }
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -463,7 +484,8 @@
   }
   function laadTaken() {
     el('takenVandaag').innerHTML = '<div class="spinner">Laden</div>';
-    run('apiAlleTaken').then(function(a) { S.alle = a; renderTaken(); });
+    run('apiAlleTaken').then(function(a) { S.alle = a; renderTaken(); })
+      .catch(function() { el('takenVandaag').innerHTML = '<div class="leeg">Kon de taken niet laden — tik op ← Vandaag en probeer opnieuw.</div>'; });  // v4.5: spinner bleef anders eindeloos staan
   }
   function vindTaak(id) {
     var alles = S.alle.vandaag.concat(S.alle.backlog);
@@ -500,7 +522,7 @@
       return;
     }
     var t = ev.target.closest('.nr');
-    if (t) {
+    if (t && S.data) {  // v4.5: null-guard
       var id = t.dataset.id;
       S.data.taken = S.data.taken.filter(function(x) { return x.id !== id; });
       render(S.data);
@@ -508,7 +530,7 @@
       return;
     }
     var fk = ev.target.closest('#focusKlaar');
-    if (fk && fk.dataset.id) {
+    if (fk && fk.dataset.id && S.data) {
       var fid = fk.dataset.id;
       S.data.taken = S.data.taken.filter(function(x) { return x.id !== fid; });
       render(S.data);
@@ -516,7 +538,7 @@
       return;
     }
     var h = ev.target.closest('.habit');
-    if (h) {
+    if (h && S.data) {
       var naam = h.dataset.habit;
       S.data.habits.forEach(function(x) {
         if (x.naam === naam) { x.done = !x.done; x.streak = Math.max(0, x.streak + (x.done ? 1 : -1)); }
@@ -584,6 +606,7 @@
   });
 
   el('focusKnop').addEventListener('click', function() {
+    if (!S.data) { laad(); return; }  // v4.5: knop gooide een TypeError zolang het dashboard nog niet geladen was
     var aan = !document.body.classList.contains('focus');
     S.data.focus = aan;
     render(S.data);
@@ -649,8 +672,9 @@
       try { REC.rec.stop(); } catch (e2) { knop.classList.remove('bezig'); }
       return;
     }
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { wisselView('chat'); micMelding('Opnemen kan hier niet — open de app via het beginscherm-icoon.'); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { wisselView('chat'); micMelding('Opnemen kan hier niet — open de app via het beginscherm-icoon, of typ je bericht.'); return; }  // v4.5: ook MediaRecorder checken
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      try {  // v4.5: een fout hierbinnen viel in de .catch ("geen microfoontoegang") en liet de mic-stream open staan
       var mime = '';
       ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].some(function(m2) {
         if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m2)) { mime = m2; return true; }
@@ -662,7 +686,7 @@
       REC.rec.onstop = function() {
         stream.getTracks().forEach(function(tr) { tr.stop(); });
         var blob = new Blob(REC.chunks, { type: REC.rec.mimeType || 'audio/mp4' });
-        if (blob.size < 1000) { el('micKnop').classList.remove('bezig'); return; }
+        if (blob.size < 1000) { el('micKnop').classList.remove('bezig'); wisselView('chat'); micMelding('Die opname was te kort — houd de knop niet vast, tik één keer om te starten en één keer om te stoppen.'); return; }  // v4.5: was stil
         var fr = new FileReader();
         fr.onloadend = function() {
           var b64 = String(fr.result).split(',')[1] || '';
@@ -689,6 +713,11 @@
       REC.rec.start();
       REC.aan = true;
       knop.classList.add('opname');
+      } catch (e3) {
+        stream.getTracks().forEach(function(tr) { tr.stop(); });
+        wisselView('chat');
+        micMelding('Opnemen lukte niet op dit toestel (' + esc(e3 && e3.message || 'onbekende fout') + '). Typ je bericht in plaats daarvan.');
+      }
     }).catch(function() {
       wisselView('chat');
       micMelding('Geen microfoontoegang — sta die toe in je instellingen.');
@@ -716,7 +745,7 @@
       el('jaarDoelen').innerHTML = rj(groep('jaar'), 'Nog leeg.');
       el('visieQuote').textContent = d.visie ? '"' + d.visie + '"' : 'Nog geen visie — tik op Bewerk.';
       el('visieTekst').value = d.visie || '';
-    });
+    }).catch(function() { el('projectenLijst').innerHTML = '<div class="leeg">Kon doelen niet laden — wissel van tabblad en probeer opnieuw.</div>'; });  // v4.5
   }
   document.querySelectorAll('[data-doel]').forEach(function(b) {
     b.addEventListener('click', function() {
@@ -761,7 +790,7 @@
           '<div class="a-knoppen"><button class="a-nee" data-beslis="nee" data-id="' + esc(a.id) + '">NEE</button>' +
           '<button class="a-ja" data-beslis="ja" data-id="' + esc(a.id) + '">DOEN</button></div></div></div>';
       }).join('') : '<div class="leeg">Niets te beoordelen. Donna wacht nergens op.</div>';
-    });
+    }).catch(function() { el('actiesLijst').innerHTML = '<div class="leeg">Kon acties niet laden — wissel van tabblad en probeer opnieuw.</div>'; });  // v4.5
   }
   document.addEventListener('click', function(ev) {
     var b = ev.target.closest('[data-beslis]');
@@ -771,7 +800,7 @@
     run('apiBeslis', b.dataset.id, b.dataset.beslis === 'ja').then(function(msg) {
       kaart.remove();
       laadActies(); laad();
-      if (b.dataset.beslis === 'ja') alert(msg.replace(/[*_`]/g, ''));
+      if (b.dataset.beslis === 'ja' && typeof msg === 'string') alert(msg.replace(/[*_`]/g, ''));  // v4.5: geen crash als de backend geen tekst teruggeeft
     }).catch(laadActies);
   });
 
@@ -971,15 +1000,22 @@
     b.addEventListener('click', function() { wisselView(b.dataset.view); });
   });
 
-  el('codeOpslaan').addEventListener('click', function() {
+  function koppel() {
     var v = el('codeInput').value.trim(); if (!v) return;
     try { localStorage.setItem('dv_secret', v); } catch (e) {}
+    if (!secret()) { el('koppelFout').textContent = 'Opslaan lukt niet op dit toestel (privémodus of opslag geblokkeerd).'; return; }  // v4.5: eerder gebeurde er zichtbaar niets
     if (checkKoppeling()) laad();
-  });
+  }
+  el('codeOpslaan').addEventListener('click', koppel);
+  el('codeInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') koppel(); });  // v4.5: Enter op het toetsenbord deed niets
 
   renderSpiek();
   herrenderChat();
   if (checkKoppeling()) laad();
+  // v4.5: een standalone PWA blijft dagen open staan; bij terugkeer naar de voorgrond toonde Vandaag verouderde data
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && document.body.classList.contains('v-vandaag') && secret()) laad();
+  });
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function() {}); }
 </script>
 </body>
