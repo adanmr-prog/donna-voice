@@ -272,7 +272,7 @@
   <div class="view" id="view-chat">
     <div id="berichten"></div>
     <div class="chat-invoer">
-      <input id="chatInput" placeholder="Schrijf aan Donna…" autocomplete="off">
+      <input id="chatInput" placeholder="Schrijf aan Donna…" autocomplete="off" enterkeyhint="send">
       <button id="chatKnop" aria-label="Versturen"><svg class="ic" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
     </div>
   </div>
@@ -408,7 +408,8 @@
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function md(s) {
-    return esc(s).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/_([^_\n]+)_/g, '<i>$1</i>').replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    // v4.8: _cursief_ alleen als de underscores aan een woordgrens staan; snake_case_namen en dv_secret_x bleven anders verminkt
+    return esc(s).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(^|[\s(\[>])_([^_\n]+)_(?=$|[\s.,;:!?)\]<])/g, '$1<i>$2</i>').replace(/`([^`\n]+)`/g, '<code>$1</code>');
   }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   var KAL_SVG = '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
@@ -579,7 +580,14 @@
       return;
     }
     var ag = ev.target.closest('#agendaLijst');
-    if (ag) { window.open('https://calendar.google.com/calendar/u/0/r', '_blank'); return; }
+    if (ag) {
+      // v4.8: geen window.open meer (popupblokker in standalone-modus); een gewone link met target=_blank opent op iOS
+      // de in-app browser met een Gereed-knop, zodat je in Donna blijft
+      var link = document.createElement('a');
+      link.href = 'https://calendar.google.com/calendar/u/0/r'; link.target = '_blank'; link.rel = 'noopener';
+      document.body.appendChild(link); link.click(); link.remove();
+      return;
+    }
     var pl = ev.target.closest('#pendingLink');
     if (pl) { wisselView('acties'); return; }
     var kl = ev.target.closest('[data-klaar]');
@@ -1067,6 +1075,18 @@
     if (document.body.classList.contains('v-vandaag') && secret()) laad();
   });
   timerHerstel();  // v4.6
+  // v4.8: iOS schuift bij een open toetsenbord de hele pagina omhoog in plaats van de layout te verkleinen, zodat het
+  // chatveld en de nav achter het toetsenbord vielen. De body volgt nu de zichtbare viewport (visualViewport).
+  if (window.visualViewport) {
+    var pasViewport = function() {
+      var vv = window.visualViewport;
+      var vol = Math.abs(vv.height - window.innerHeight) < 40;  // toetsenbord dicht: terug naar de normale layout
+      document.body.style.height = vol ? '' : vv.height + 'px';
+      if (!vol) { window.scrollTo(0, 0); var b = el('berichten'); if (b) b.scrollTop = b.scrollHeight; }
+    };
+    window.visualViewport.addEventListener('resize', pasViewport);
+    window.visualViewport.addEventListener('scroll', pasViewport);
+  }
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function() {}); }
 </script>
 </body>
