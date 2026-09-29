@@ -498,7 +498,9 @@
     var knop = document.querySelector('[data-taaknieuw="' + bron + '"]');
     inp.value = ''; inp.disabled = true; if (knop) knop.disabled = true;
     var viaChat = false;
-    try { viaChat = localStorage.getItem('dos_voegtaak') === 'chat'; } catch (e) {}
+    // v4.7: de chat-route is niet meer permanent. Na 12 uur probeert de app apiVoegTaak opnieuw, zodat een nieuwe
+    // backend-deploy vanzelf wordt opgepikt zonder localStorage te wissen.
+    try { viaChat = (Date.now() - Number(localStorage.getItem('dos_voegtaak') || 0)) < 12 * 3600000; } catch (e) {}
     function klaar() { inp.disabled = false; if (knop) knop.disabled = false; if (bron === 'taken') laadTaken(); else laad(); toast('Taak toegevoegd'); }
     function mislukt() { inp.disabled = false; if (knop) knop.disabled = false; inp.value = tekst; }
     function chatRoute() {
@@ -508,7 +510,7 @@
     }
     (viaChat ? chatRoute() : run('apiVoegTaak', tekst).catch(function(err) {
       if (err && err.message === 'secret') throw err;
-      try { localStorage.setItem('dos_voegtaak', 'chat'); } catch (e) {}  // backend kent apiVoegTaak niet: voortaan via de chat
+      try { localStorage.setItem('dos_voegtaak', String(Date.now())); } catch (e) {}  // backend kent apiVoegTaak niet: 12 uur via de chat (v4.7)
       return chatRoute();
     })).then(klaar).catch(mislukt);
   }
