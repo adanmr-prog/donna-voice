@@ -1,5 +1,5 @@
 /* Donna OS — service worker: HTML network-first (cache als fallback), statische shell cache-first, API altijd via netwerk */
-var CACHE = 'donna-os-v4.5';  // bump bij elke release (zie /release)
+var CACHE = 'donna-os-v4.6';  // bump bij elke release (zie /release)
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 var NET_TIMEOUT_MS = 3000;  // v4.4: bij trage verbinding na 3 s de gecachte shell tonen; het netwerk werkt op de achtergrond door
 
