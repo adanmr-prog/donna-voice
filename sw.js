@@ -1,5 +1,5 @@
 /* Donna OS — service worker: HTML network-first (cache als fallback), statische shell cache-first, API altijd via netwerk */
-var CACHE = 'donna-os-v4.4';  // bump bij elke release (zie /release)
+var CACHE = 'donna-os-v4.5';  // bump bij elke release (zie /release)
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 var NET_TIMEOUT_MS = 3000;  // v4.4: bij trage verbinding na 3 s de gecachte shell tonen; het netwerk werkt op de achtergrond door
 
@@ -36,11 +36,13 @@ function netwerkEerst(e) {
     if (!(resp && resp.ok)) return uitCache(req).then(function (hit) { return hit || resp; });  // serverfout: liever de oude shell dan een foutpagina
     return zonderRedirect(resp).then(function (schoon) {
       var kopie = schoon.clone();
-      e.waitUntil(caches.open(CACHE).then(function (c) { return c.put(req, kopie); }));  // waitUntil: iOS mag de SW anders stoppen vóór de put klaar is
-      return schoon;
+      return caches.open(CACHE).then(function (c) { return c.put(req, kopie); }).catch(function () {}).then(function () { return schoon; });
     });
   });
-  vanNet.catch(function () {});  // als de timeout al gewonnen heeft en het netwerk daarna faalt, is dat geen onafgehandelde fout
+  // v4.5: waitUntil meteen (synchroon) registreren. Voorheen stond hij ín de .then; als de 3 s-timeout al gewonnen had
+  // was respondWith afgehandeld en gooide waitUntil InvalidStateError, zodat een nieuwe index.html op trage verbindingen
+  // nooit in de cache landde. iOS mag de SW anders ook stoppen vóór de put klaar is.
+  e.waitUntil(vanNet.catch(function () {}));  // dekt ook: timeout won en het netwerk faalt daarna — geen onafgehandelde fout
   var naTimeout = new Promise(function (klaar) { setTimeout(klaar, NET_TIMEOUT_MS); })
     .then(function () { return uitCache(req); })
     .then(function (hit) { return hit || vanNet; });  // niets in cache: dan toch op het netwerk wachten
