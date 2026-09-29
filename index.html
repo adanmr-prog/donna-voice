@@ -239,6 +239,7 @@
     <div class="verberg-in-focus">
       <button class="sectie-kop" id="naarTaken">Taken <svg class="ic" viewBox="0 0 24 24" style="width:11px;height:11px"><path d="m9 18 6-6-6-6"/></svg></button>
       <div id="takenLijst"><div class="spinner">Laden</div></div>
+      <div class="planner-invoer"><input id="taakInputVandaag" placeholder="Nieuwe taak" autocomplete="off" enterkeyhint="done"><button data-taaknieuw="vandaag" aria-label="Taak toevoegen"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg></button></div>
       <div class="hint">nummer = afvinken · taak = stappenplan · TAKEN = volledige lijst</div>
       <div class="sectie-kop">Agenda</div>
       <div id="agendaLijst" class="tijdlijn"><div class="leeg" style="margin-left:14px">—</div></div>
@@ -264,6 +265,7 @@
     <div id="takenVandaag"><div class="spinner">Laden</div></div>
     <div class="sectie-kop">Backlog</div>
     <div id="takenBacklog"></div>
+    <div class="planner-invoer"><input id="taakInputTaken" placeholder="Nieuwe taak" autocomplete="off" enterkeyhint="done"><button data-taaknieuw="taken" aria-label="Taak toevoegen"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg></button></div>
     <div class="hint">tik ○ om af te vinken · tik op de prioriteit om te wisselen · kalender = inplannen in je agenda</div>
   </div>
 
@@ -487,6 +489,33 @@
     run('apiAlleTaken').then(function(a) { S.alle = a; renderTaken(); })
       .catch(function() { el('takenVandaag').innerHTML = '<div class="leeg">Kon de taken niet laden — tik op ← Vandaag en probeer opnieuw.</div>'; });  // v4.5: spinner bleef anders eindeloos staan
   }
+  /* v4.6: handmatig een taak toevoegen, zonder dat Donna de tekst hoeft te interpreteren.
+     Eerst apiVoegTaak(tekst). Heeft de backend die functie (nog) niet, dan valt het terug op apiChat met een
+     vaste opdracht, en onthoudt dat zodat de volgende keer meteen de chat-route wordt genomen. */
+  function voegTaak(bron) {
+    var inp = el(bron === 'taken' ? 'taakInputTaken' : 'taakInputVandaag');
+    var tekst = inp.value.trim(); if (!tekst) return;
+    var knop = document.querySelector('[data-taaknieuw="' + bron + '"]');
+    inp.value = ''; inp.disabled = true; if (knop) knop.disabled = true;
+    var viaChat = false;
+    try { viaChat = localStorage.getItem('dos_voegtaak') === 'chat'; } catch (e) {}
+    function klaar() { inp.disabled = false; if (knop) knop.disabled = false; if (bron === 'taken') laadTaken(); else laad(); toast('Taak toegevoegd'); }
+    function mislukt() { inp.disabled = false; if (knop) knop.disabled = false; inp.value = tekst; }
+    function chatRoute() {
+      return run('apiChat', 'Voeg deze taak toe aan mijn takenlijst, letterlijk zoals ik hem opschrijf, zonder er iets aan te veranderen: ' + tekst, 'donna').then(function(antw) {
+        S.chats.donna.push({ rol: 'ik', tekst: tekst }); S.chats.donna.push({ rol: 'bot', tekst: antw }); saveChat(); herrenderChat();
+      });
+    }
+    (viaChat ? chatRoute() : run('apiVoegTaak', tekst).catch(function(err) {
+      if (err && err.message === 'secret') throw err;
+      try { localStorage.setItem('dos_voegtaak', 'chat'); } catch (e) {}  // backend kent apiVoegTaak niet: voortaan via de chat
+      return chatRoute();
+    })).then(klaar).catch(mislukt);
+  }
+  document.querySelectorAll('[data-taaknieuw]').forEach(function(b) { b.addEventListener('click', function() { voegTaak(b.dataset.taaknieuw); }); });
+  el('taakInputVandaag').addEventListener('keydown', function(e) { if (e.key === 'Enter') voegTaak('vandaag'); });
+  el('taakInputTaken').addEventListener('keydown', function(e) { if (e.key === 'Enter') voegTaak('taken'); });
+
   function vindTaak(id) {
     var alles = S.alle.vandaag.concat(S.alle.backlog);
     return alles.filter(function(t){ return t.id === id; })[0];
@@ -805,41 +834,58 @@
   });
 
   /* ===== Lock-in: timer, weekraster, Life Chart ===== */
-  var T2 = { rest: 0, loopt: null };
-  function timerToon() {
-    var m = Math.floor(T2.rest / 60), s = T2.rest % 60;
-    var t = pad2(m) + ':' + pad2(s);
-    el('timerTijd').textContent = t;
-    document.title = T2.loopt ? t + ' — Donna OS' : 'Donna OS';
+  // v4.6: timer rekent met een eindtijd i.p.v. een aftellende teller. iOS pauzeert JS zodra het scherm uit gaat of de
+  // app naar de achtergrond gaat; de oude setInterval liep dan achter of stopte. De eindtijd staat ook in localStorage,
+  // zodat de timer een herstart van de PWA overleeft.
+  var T2 = { eind: 0, min: 0, loopt: null };
+  function timerBewaar() { try { if (T2.eind) localStorage.setItem('dos_timer', JSON.stringify({ eind: T2.eind, min: T2.min })); else localStorage.removeItem('dos_timer'); } catch (e) {} }
+  function timerReset(sub) {
+    clearInterval(T2.loopt); T2.loopt = null; T2.eind = 0; timerBewaar();
+    el('timerStop').style.display = 'none';
+    el('timerTijd').textContent = '25:00';
+    el('timerSub').textContent = sub;
+    document.title = 'Donna OS';
   }
-  function timerStart(min) {
+  function timerKlaar() {
+    clearInterval(T2.loopt); T2.loopt = null; T2.eind = 0; timerBewaar();
+    el('timerStop').style.display = 'none';
+    el('timerSub').textContent = 'Blok af — sta op, beweeg, kies je volgende';
+    el('timerTijd').textContent = 'KLAAR';
+    document.title = 'Klaar — Donna OS';
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    try { if (window.Notification && Notification.permission === 'granted') new Notification('Blok af', { body: T2.min + ' min diep werk gedaan. Sta op, beweeg, kies je volgende.' }); } catch (e) {}
+    toast('Blok af — ' + T2.min + ' min gedaan');
+  }
+  function timerToon() {
+    var rest = Math.max(0, Math.round((T2.eind - Date.now()) / 1000));
+    if (rest <= 0) { timerKlaar(); return; }
+    var t = pad2(Math.floor(rest / 60)) + ':' + pad2(rest % 60);
+    el('timerTijd').textContent = t;
+    document.title = t + ' — Donna OS';
+  }
+  function timerStart(min, eind) {
     clearInterval(T2.loopt);
-    T2.rest = min * 60;
+    T2.min = min; T2.eind = eind || (Date.now() + min * 60000); timerBewaar();
     el('timerStop').style.display = 'inline-block';
     el('timerSub').textContent = 'Diep werk — ' + min + ' min';
-    T2.loopt = setInterval(function() {
-      T2.rest--;
-      timerToon();
-      if (T2.rest <= 0) {
-        clearInterval(T2.loopt); T2.loopt = null;
-        el('timerStop').style.display = 'none';
-        el('timerSub').textContent = 'Blok af — sta op, beweeg, kies je volgende';
-        el('timerTijd').textContent = 'KLAAR';
-        document.title = 'Klaar — Donna OS';
-      }
-    }, 1000);
+    T2.loopt = setInterval(timerToon, 1000);
     timerToon();
   }
   document.querySelectorAll('.t-knoppen [data-min]').forEach(function(b) {
-    b.addEventListener('click', function() { timerStart(Number(b.dataset.min)); });
+    b.addEventListener('click', function() {
+      try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {}  // alleen na een tik, anders weigert Safari
+      timerStart(Number(b.dataset.min));
+    });
   });
-  el('timerStop').addEventListener('click', function() {
-    clearInterval(T2.loopt); T2.loopt = null;
-    el('timerStop').style.display = 'none';
-    el('timerTijd').textContent = '25:00';
-    el('timerSub').textContent = 'Gestopt — noteer eerlijk waarom, en opnieuw';
-    document.title = 'Donna OS';
-  });
+  el('timerStop').addEventListener('click', function() { timerReset('Gestopt — noteer eerlijk waarom, en opnieuw'); });
+  function timerHerstel() {
+    var opgeslagen = null;
+    try { opgeslagen = JSON.parse(localStorage.getItem('dos_timer') || 'null'); } catch (e) {}
+    if (!opgeslagen || !opgeslagen.eind) return;
+    if (opgeslagen.eind > Date.now()) timerStart(opgeslagen.min, opgeslagen.eind);
+    else if (Date.now() - opgeslagen.eind < 3600000) { T2.min = opgeslagen.min; timerKlaar(); }  // in het afgelopen uur afgelopen terwijl de app sliep: toon KLAAR
+    else timerReset('Kies een blok — één ding');
+  }
 
   function laadLockIn() {
     run('apiPlannerStats').then(function(s) {
@@ -1014,8 +1060,11 @@
   if (checkKoppeling()) laad();
   // v4.5: een standalone PWA blijft dagen open staan; bij terugkeer naar de voorgrond toonde Vandaag verouderde data
   document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible' && document.body.classList.contains('v-vandaag') && secret()) laad();
+    if (document.visibilityState !== 'visible') return;
+    if (T2.eind) timerToon();  // v4.6: direct de juiste resttijd tonen na slaapstand
+    if (document.body.classList.contains('v-vandaag') && secret()) laad();
   });
+  timerHerstel();  // v4.6
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function() {}); }
 </script>
 </body>

@@ -43,6 +43,7 @@ user-invocable: false
 | apiLockIn | geen | lock-in data |
 | apiChecklists | geen | lijsten, wordt `S.checklists` |
 | apiToggleChecklist | lijstId, itemId | geen |
+| apiVoegTaak | tekst | geen (daarna herladen). Sinds v4.6; ontbreekt de functie in de backend, dan valt `voegTaak()` in index.html terug op `apiChat` met een vaste opdracht en onthoudt dat in `localStorage.dos_voegtaak` |
 
 ## Nieuwe functie toevoegen
 1. Implementeer `apiNaam(...)` in het Apps Script-project (buiten deze repo). De dispatcher daar geeft `{ok:true, result}` of `{ok:false, fout}` terug.
